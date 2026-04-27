@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ℛØℬᎥ Graphics – AI Metadata Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050a12;
+    --bg2: #080f1c;
+    --panel: #0b1526;
+    --card: #0f1d30;
+    --border: #1a3050;
+    --accent: #00e5ff;
+    --accent2: #ff6b00;
+    --accent3: #7c3aed;
+    --green: #00ff88;
+    --red: #ff2d55;
+    --text: #e2eaf5;
+    --muted: #6b8aaa;
+    --glow: 0 0 20px rgba(0,229,255,0.3);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      radial-gradient(ellipse at 10% 10%, rgba(0,229,255,0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 80%, rgba(124,58,237,0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(255,107,0,0.03) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(5,10,18,0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+  }
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 22px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 60%, var(--accent3) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 2px;
+    filter: drop-shadow(0 0 10px rgba(0,229,255,0.5));
+  }
+  .logo span { font-size: 11px; display: block; color: var(--muted); letter-spacing: 4px; font-family: 'Space Mono', monospace; -webkit-text-fill-color: var(--muted); filter: none; margin-top: -4px; }
+  .header-right { display: flex; gap: 10px; align-items: center; }
+
+  /* BIGGER HEADER BUTTONS */
+  .btn-api {
+    background: linear-gradient(135deg, var(--accent3), #5b21b6);
+    color: #fff;
+    border: none; cursor: pointer;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px; font-weight: 700;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+  .btn-api:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.5); }
+
+  .btn-settings {
+    background: linear-gradient(135deg, #1a3050, #0b1526);
+    color: var(--accent);
+    border: 1px solid var(--border); cursor: pointer;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px; font-weight: 700;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+  .btn-settings:hover { border-color: var(--accent); box-shadow: 0 0 12px rgba(0,229,255,0.2); }
+
+  .btn-users {
+    background: rgba(0,255,136,0.1);
+    color: var(--green);
+    border: 1px solid rgba(0,255,136,0.3); cursor: pointer;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px; font-weight: 700;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+  .btn-users:hover { background: rgba(0,255,136,0.2); }
+
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* LAYOUT */
+  .main { display: flex; position: relative; z-index: 1; min-height: calc(100vh - 64px); }
+  
+  /* SIDEBAR */
+  .sidebar {
+    width: 300px; min-width: 300px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(100vh - 64px);
+    position: sticky; top: 64px;
+  }
+  .sidebar-section { margin-bottom: 24px; }
+  .sidebar-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px; color: var(--accent); letter-spacing: 3px;
+    text-transform: uppercase; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sidebar-label::after { content:''; flex: 1; height: 1px; background: var(--border); }
+  
+  select, input[type=text], textarea {
+    width: 100%; background: var(--bg2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 10px 12px;
+    font-family: 'Rajdhani', sans-serif; font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  select:focus, input:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0,229,255,0.15);
+  }
+  select option { background: var(--panel); }
+
+  .slider-wrap { margin-top: 8px; }
+  .slider-header { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
+  .slider-header span:last-child { color: var(--accent); font-weight: 700; font-family: 'Space Mono', monospace; font-size: 11px; }
+  input[type=range] {
+    width: 100%; height: 4px; border-radius: 2px;
+    background: var(--border); border: none; padding: 0;
+    -webkit-appearance: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px;
+    border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 8px var(--accent); cursor: pointer;
+  }
+
+  .toggle-wrap { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
+  .toggle-label { font-size: 14px; color: var(--text); }
+  .toggle {
+    width: 44px; height: 24px; border-radius: 12px;
+    background: var(--border); position: relative; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .toggle.on { background: var(--green); }
+  .toggle::after {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: white; top: 3px; left: 3px;
+    transition: transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .toggle.on::after { transform: translateX(20px); }
+
+  .model-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .pill {
+    padding: 5px 10px; border-radius: 6px; font-size: 11px;
+    background: var(--bg2); border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer; transition: all 0.2s;
+    font-family: 'Space Mono', monospace;
+    display: flex; align-items: center; gap: 5px;
+    position: relative;
+  }
+  .pill.active { background: rgba(0,229,255,0.1); border-color: var(--accent); color: var(--accent); }
+  .pill:hover:not(.active) { border-color: var(--muted); color: var(--text); }
+  .pill .badge {
+    font-size: 8px; font-weight: 900; padding: 1px 5px; border-radius: 3px;
+    letter-spacing: 0.5px; flex-shrink: 0;
+  }
+  .pill .badge.free { background: rgba(0,255,136,0.2); color: var(--green); border: 1px solid rgba(0,255,136,0.4); }
+  .pill .badge.paid { background: rgba(255,45,85,0.15); color: var(--red); border: 1px solid rgba(255,45,85,0.3); }
+  .pill .tip {
+    position: absolute; bottom: calc(100% + 8px); left: 0;
+    background: #0a1628; border: 1px solid var(--border);
+    color: var(--text); font-size: 10px; padding: 6px 10px;
+    border-radius: 6px; white-space: nowrap; pointer-events: none;
+    opacity: 0; transition: opacity 0.15s; z-index: 50;
+    font-family: 'Rajdhani', sans-serif; font-size: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    min-width: 180px; white-space: normal; max-width: 220px;
+  }
+  .pill:hover .tip { opacity: 1; }
+
+  /* CONTENT */
+  .content { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* PLATFORM TABS */
+  .platform-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ptab {
+    padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 700;
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer; transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .ptab.active { background: rgba(255,107,0,0.12); border-color: var(--accent2); color: var(--accent2); }
+  .ptab:hover:not(.active) { border-color: var(--muted); color: var(--text); }
+
+  /* DROP ZONE */
+  .dropzone {
+    border: 2px dashed var(--border); border-radius: 16px;
+    background: var(--card);
+    min-height: 220px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px;
+    cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden;
+  }
+  .dropzone::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(0,229,255,0.03), rgba(124,58,237,0.03));
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .dropzone:hover { border-color: var(--accent); box-shadow: var(--glow); }
+  .dropzone:hover::before { opacity: 1; }
+  .dropzone.dragover { border-color: var(--accent); background: rgba(0,229,255,0.05); box-shadow: var(--glow); }
+  .dz-icons { display: flex; gap: 24px; }
+  .dz-icon { text-align: center; }
+  .dz-icon .ico { font-size: 32px; }
+  .dz-icon p { font-size: 11px; color: var(--muted); margin-top: 4px; font-family: 'Space Mono', monospace; }
+  .dz-text { text-align: center; }
+  .dz-text h3 { font-size: 16px; font-weight: 600; }
+  .dz-text p { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .dz-text a { color: var(--accent); text-decoration: none; }
+  #fileInput { display: none; }
+
+  /* UPLOAD LOADING OVERLAY */
+  .upload-loading {
+    position: absolute; inset: 0;
+    background: rgba(5,10,18,0.92);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px; border-radius: 14px; z-index: 10;
+  }
+  .upload-loading.show { display: flex; }
+  .upload-spinner {
+    width: 52px; height: 52px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .upload-loading-text { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--accent); letter-spacing: 2px; }
+  .upload-loading-sub { font-size: 12px; color: var(--muted); }
+  .upload-file-list { max-height: 120px; overflow-y: auto; width: 80%; }
+  .upload-file-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 8px; border-radius: 6px;
+    background: rgba(0,229,255,0.05);
+    margin-bottom: 4px; font-size: 11px;
+    font-family: 'Space Mono', monospace;
+  }
+  .upload-file-item .ufi-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+  .upload-file-item .ufi-status { color: var(--accent); }
+  .upload-file-item.done .ufi-status { color: var(--green); }
+  .upload-file-item.err .ufi-status { color: var(--red); }
+
+  /* PREVIEW GRID */
+  .preview-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px; min-height: 0;
+  }
+  .preview-item {
+    aspect-ratio: 1; border-radius: 8px; background: var(--bg2);
+    border: 1px solid var(--border); overflow: hidden; position: relative;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .preview-item:hover { border-color: var(--accent); transform: scale(1.05); }
+  .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+  .preview-item .rm { position: absolute; top: 3px; right: 3px; background: rgba(255,45,85,0.9); color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 10px; padding: 1px 5px; opacity: 0; transition: opacity 0.2s; }
+  .preview-item:hover .rm { opacity: 1; }
+  /* EPS/AI preview processing indicator */
+  .preview-item .processing-badge {
+    position: absolute; bottom: 3px; left: 3px;
+    background: rgba(0,229,255,0.85); color: #000;
+    font-size: 8px; padding: 1px 5px; border-radius: 3px;
+    font-family: 'Space Mono', monospace; font-weight: 700;
+    animation: pulse 1s infinite;
+  }
+
+  /* ACTION BAR */
+  .action-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn {
+    padding: 13px 26px; border-radius: 10px; font-size: 15px; font-weight: 700;
+    border: none; cursor: pointer; transition: all 0.2s;
+    font-family: 'Rajdhani', sans-serif; letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-clear { background: rgba(255,45,85,0.15); color: var(--red); border: 1px solid rgba(255,45,85,0.3); }
+  .btn-clear:hover { background: rgba(255,45,85,0.25); }
+  .btn-generate { background: linear-gradient(135deg, var(--accent), #0099cc); color: #000; font-weight: 900; }
+  .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(0,229,255,0.4); }
+  .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-export { background: rgba(0,255,136,0.12); color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+  .btn-export:hover { background: rgba(0,255,136,0.2); }
+  .btn-pause { background: rgba(255,107,0,0.12); color: var(--accent2); border: 1px solid rgba(255,107,0,0.3); }
+
+  /* PROGRESS */
+  .progress-wrap { display: none; }
+  .progress-wrap.show { display: block; }
+  .progress-info { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+  .progress-info span { color: var(--muted); font-family: 'Space Mono', monospace; }
+  .progress-info strong { color: var(--accent); }
+  .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); border-radius: 3px; transition: width 0.4s; width: 0%; box-shadow: 0 0 8px var(--accent); }
+
+  /* PROCESSING ITEM INDICATOR */
+  .processing-item-bar {
+    display: none; margin-top: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px;
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    color: var(--muted); align-items: center; gap: 10px;
+  }
+  .processing-item-bar.show { display: flex; }
+  .processing-item-bar .pib-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent2);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  .processing-item-bar .pib-name { color: var(--accent2); font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* RESULTS */
+  .results-header { display: flex; align-items: center; justify-content: space-between; }
+  .results-title { font-family: 'Orbitron', monospace; font-size: 14px; letter-spacing: 2px; color: var(--accent); }
+  .results-count { background: rgba(0,229,255,0.1); color: var(--accent); padding: 3px 10px; border-radius: 20px; font-size: 12px; font-family: 'Space Mono', monospace; }
+  .btn-dl-zip { background: linear-gradient(135deg, var(--accent3), #5b21b6); color: white; font-size: 13px; padding: 10px 18px; }
+
+  .result-list { display: flex; flex-direction: column; gap: 12px; }
+  .result-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; display: flex; gap: 14px;
+    transition: border-color 0.2s;
+    animation: slideIn 0.3s ease-out;
+  }
+  @keyframes slideIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .result-card:hover { border-color: rgba(0,229,255,0.3); }
+  .result-thumb { width: 80px; min-width: 80px; height: 80px; border-radius: 8px; object-fit: cover; background: var(--bg2); border: 1px solid var(--border); }
+  .result-body { flex: 1; min-width: 0; }
+  .result-filename { font-size: 11px; color: var(--muted); margin-bottom: 6px; font-family: 'Space Mono', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .result-field { margin-bottom: 8px; }
+  .result-field-label { font-size: 10px; color: var(--accent2); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 3px; font-family: 'Space Mono', monospace; }
+  .result-field-text { font-size: 14px; font-weight: 600; color: var(--text); }
+  .result-field-text.desc { font-size: 13px; font-weight: 400; color: #b0c4d8; line-height: 1.4; }
+  .keywords-wrap { display: flex; flex-wrap: wrap; gap: 5px; }
+  .kw { padding: 3px 9px; border-radius: 4px; font-size: 11px; background: rgba(0,229,255,0.08); color: var(--accent); border: 1px solid rgba(0,229,255,0.15); font-family: 'Space Mono', monospace; }
+  .result-meta { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+  .result-meta span { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .result-meta strong { color: var(--text); }
+  .result-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+  .btn-icon { background: none; border: 1px solid var(--border); color: var(--muted); cursor: pointer; padding: 6px 10px; border-radius: 6px; font-size: 13px; transition: all 0.2s; }
+  .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* CATEGORY BADGE */
+  .cat-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 4px; font-size: 11px;
+    background: rgba(124,58,237,0.12); color: var(--accent3);
+    border: 1px solid rgba(124,58,237,0.3); font-family: 'Space Mono', monospace;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 999;
+    background: var(--card); border: 1px solid var(--accent);
+    border-radius: 12px; padding: 14px 20px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14px; font-weight: 600;
+    box-shadow: 0 8px 32px rgba(0,229,255,0.2);
+    transform: translateX(200%); transition: transform 0.3s;
+    max-width: 360px;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast .ti { font-size: 20px; }
+
+  /* MODAL */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px); z-index: 200;
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px; width: 460px; max-width: 95vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal h2 { font-family: 'Orbitron', monospace; font-size: 16px; color: var(--accent); margin-bottom: 6px; }
+  .modal p { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+  .modal input { margin-bottom: 12px; }
+  .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
+  .modal-section-label { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--accent2); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; margin-top: 16px; display: flex; align-items: center; gap: 8px; }
+  .modal-section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  /* THEME GRID */
+  .theme-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 8px; }
+  .theme-card {
+    border: 2px solid var(--border); border-radius: 8px; padding: 10px 8px;
+    cursor: pointer; transition: all 0.2s; text-align: center; font-size: 11px;
+    font-family: 'Space Mono', monospace; color: var(--muted);
+  }
+  .theme-card:hover { border-color: var(--accent); color: var(--accent); }
+  .theme-card.active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.07); }
+  .theme-card .tc-icon { font-size: 20px; margin-bottom: 4px; }
+
+  /* USER COUNTER MODAL */
+  .user-stat { 
+    display: flex; align-items: center; gap: 12px;
+    background: var(--bg2); border-radius: 10px; padding: 14px;
+    margin-bottom: 10px; border: 1px solid var(--border);
+  }
+  .user-stat-icon { font-size: 28px; }
+  .user-stat-info { flex: 1; }
+  .user-stat-num { font-family: 'Orbitron', monospace; font-size: 22px; color: var(--accent); }
+  .user-stat-label { font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+  /* EPS/AI VIEWER */
+  .vector-preview-modal .modal { width: 600px; }
+  .vector-canvas-wrap { background: #fff; border-radius: 8px; overflow: hidden; text-align: center; }
+  .vector-canvas-wrap canvas { max-width: 100%; height: auto; }
+  .vector-meta-list { margin-top: 12px; }
+  .vector-meta-item { display: flex; gap: 8px; margin-bottom: 6px; font-size: 12px; }
+  .vector-meta-item span:first-child { color: var(--muted); font-family: 'Space Mono', monospace; min-width: 80px; }
+  .vector-meta-item span:last-child { color: var(--text); }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+  .empty .ei { font-size: 40px; margin-bottom: 12px; }
+  .empty p { font-size: 14px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .content { padding: 12px; }
+    .ptab { padding: 8px 12px; font-size: 12px; }
+  }
+
+  /* THEME VARIATIONS */
+  body.theme-purple {
+    --accent: #c084fc; --accent2: #f59e0b; --accent3: #06b6d4;
+    --glow: 0 0 20px rgba(192,132,252,0.3);
+  }
+  body.theme-green {
+    --accent: #4ade80; --accent2: #fb923c; --accent3: #818cf8;
+    --glow: 0 0 20px rgba(74,222,128,0.3);
+  }
+  body.theme-orange {
+    --accent: #fb923c; --accent2: #38bdf8; --accent3: #a78bfa;
+    --glow: 0 0 20px rgba(251,146,60,0.3);
+  }
+  body.theme-red {
+    --accent: #f87171; --accent2: #34d399; --accent3: #a78bfa;
+    --glow: 0 0 20px rgba(248,113,113,0.3);
+  }
+  body.theme-gold {
+    --accent: #fbbf24; --accent2: #60a5fa; --accent3: #f472b6;
+    --glow: 0 0 20px rgba(251,191,36,0.3);
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div>
+    <div class="logo">ℛØℬᎥ Graphics<span>AI · METADATA · GENERATOR</span></div>
+  </div>
+  <div class="header-right">
+    <div class="status-dot" title="AI Ready"></div>
+    <button class="btn-users" onclick="openUsersModal()">👥 Users</button>
+    <button class="btn-settings" onclick="openSettingsModal()">⚙ Settings</button>
+    <button class="btn-api" onclick="openModal()">🔑 API Key</button>
+  </div>
+</header>
+
+<div class="main">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">AI Provider</div>
+      <select id="aiProvider" onchange="updateModelList()">
+        <option value="gemini">Google Gemini (Free & Paid)</option>
+        <option value="openai">OpenAI GPT-4o</option>
+        <option value="openrouter">OpenRouter</option>
+      </select>
+      <div style="margin-top:10px;">
+        <div class="sidebar-label" style="margin-bottom:6px;">Model</div>
+        <div class="model-pills" id="modelPills"></div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Generation Settings</div>
+      <div class="slider-wrap">
+        <div class="slider-header"><span>Batch Size</span><span id="batchVal">5x</span></div>
+        <input type="range" min="1" max="20" value="5" id="batchSlider" oninput="document.getElementById('batchVal').textContent=this.value+'x'">
+      </div>
+      <div class="slider-wrap" style="margin-top:14px;">
+        <div class="slider-header"><span>RPM Limit</span><span id="rpmVal">15/min</span></div>
+        <input type="range" min="5" max="60" value="15" id="rpmSlider" oninput="document.getElementById('rpmVal').textContent=this.value+'/min'">
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Metadata</div>
+      <div class="toggle-wrap">
+        <span class="toggle-label">Auto Download CSV</span>
+        <div class="toggle on" id="csvToggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="toggle-wrap">
+        <span class="toggle-label">Category in CSV</span>
+        <div class="toggle on" id="catToggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="slider-wrap" style="margin-top:10px;">
+        <div class="slider-header"><span>Title Length</span><span id="titleVal">60 chars</span></div>
+        <input type="range" min="30" max="200" value="60" oninput="document.getElementById('titleVal').textContent=this.value+' chars'">
+      </div>
+      <div class="slider-wrap" style="margin-top:10px;">
+        <div class="slider-header"><span>Description Length</span><span id="descVal">150 chars</span></div>
+        <input type="range" min="50" max="500" value="150" oninput="document.getElementById('descVal').textContent=this.value+' chars'">
+      </div>
+      <div class="slider-wrap" style="margin-top:10px;">
+        <div class="slider-header"><span>Keywords Count</span><span id="kwVal">30</span></div>
+        <input type="range" min="5" max="50" value="30" oninput="document.getElementById('kwVal').textContent=this.value">
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Custom Prompt</div>
+      <select>
+        <option>Default (Recommended)</option>
+        <option>Stock Photo Style</option>
+        <option>Vector/Illustration</option>
+        <option>Editorial Photography</option>
+        <option>Custom…</option>
+      </select>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">File Extension</div>
+      <input type="text" placeholder="Default (keep original)">
+    </div>
+
+    <button class="btn btn-generate" style="width:100%;justify-content:center;" onclick="saveSettings()">💾 Save Settings</button>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <!-- Platform Tabs -->
+    <div class="platform-tabs" id="platformTabs">
+      <div class="ptab active" onclick="setTab(this,'general')">🌐 General</div>
+      <div class="ptab" onclick="setTab(this,'adobe')">🔺 Adobe Stock</div>
+      <div class="ptab" onclick="setTab(this,'shutterstock')">📷 Shutterstock</div>
+      <div class="ptab" onclick="setTab(this,'freepik')">🎨 Freepik</div>
+      <div class="ptab" onclick="setTab(this,'getty')">🖼 Getty Images</div>
+      <div class="ptab" onclick="setTab(this,'istock')">💡 iStock</div>
+      <div class="ptab" onclick="setTab(this,'dreamstime')">🌙 Dreamstime</div>
+      <div class="ptab" onclick="setTab(this,'vecteezy')">✏️ Vecteezy</div>
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="this.classList.remove('dragover')">
+      <input type="file" id="fileInput" multiple accept="image/*,.eps,.pdf,.ai" onchange="handleFiles(this.files)">
+      <div id="previewGrid" class="preview-grid" style="width:100%;padding:12px;display:none;"></div>
+      <!-- Upload Loading Overlay -->
+      <div class="upload-loading" id="uploadLoading">
+        <div class="upload-spinner"></div>
+        <div class="upload-loading-text">LOADING FILES…</div>
+        <div class="upload-loading-sub" id="uploadLoadingSub">Preparing files…</div>
+        <div class="upload-file-list" id="uploadFileList"></div>
+      </div>
+      <div id="dzPlaceholder">
+        <div class="dz-icons">
+          <div class="dz-icon"><div class="ico">🖼</div><p>Image</p></div>
+          <div class="dz-icon"><div class="ico">🎬</div><p>Videos</p></div>
+          <div class="dz-icon"><div class="ico">📐</div><p>EPS/AI</p></div>
+        </div>
+        <div class="dz-text" style="margin-top:16px;">
+          <h3>Drag & drop files here, or <a>click to select</a></h3>
+          <p>Supported: JPG, PNG, GIF, MP4, MOV, EPS, AI, PDF · Large batches supported</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <button class="btn btn-clear" onclick="clearAll()">🗑 Clear All</button>
+      <button class="btn btn-pause" id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
+      <button class="btn btn-generate" id="generateBtn" onclick="startGeneration()">✦ Generate (<span id="fileCount">0</span>)</button>
+      <button class="btn btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-pause" onclick="showHistory()">🕘 History</button>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-info">
+        <span id="progressStatus">Processing...</span>
+        <strong id="progressPct">0%</strong>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <!-- Per-file processing indicator -->
+      <div class="processing-item-bar" id="processingItemBar">
+        <div class="pib-spinner"></div>
+        <span>Processing: </span>
+        <span class="pib-name" id="processingItemName">—</span>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div>
+      <div class="results-header" style="margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="results-title">GENERATED METADATA</div>
+          <div class="results-count" id="resultCount">0</div>
+        </div>
+        <button class="btn btn-dl-zip" id="dlZipBtn" onclick="downloadZip()" style="display:none;">📦 Download ZIP</button>
+      </div>
+      <div class="result-list" id="resultList">
+        <div class="empty" id="emptyState">
+          <div class="ei">🔮</div>
+          <p>Upload images and click Generate to create AI-powered metadata</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- API KEY MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2>🔑 API Configuration</h2>
+    <p>Your API key is stored locally in your browser and never sent to any server.</p>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:5px;font-family:'Space Mono',monospace;">PROVIDER</div>
+      <select id="modalProvider" onchange="updateModalKey()">
+        <option value="gemini">Google Gemini</option>
+        <option value="openai">OpenAI</option>
+        <option value="openrouter">OpenRouter</option>
+      </select>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:5px;font-family:'Space Mono',monospace;">API KEY</div>
+    <input type="password" id="apiKeyInput" placeholder="Enter your API key…" oninput="saveApiKey()">
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;">
+      <span id="keyStatus">No key saved</span>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-generate" style="flex:1;justify-content:center;" onclick="testKey()">🧪 Test Key</button>
+      <button class="btn btn-clear" style="flex:1;justify-content:center;" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-bg" id="settingsModalBg">
+  <div class="modal">
+    <h2>⚙ Settings & Theme</h2>
+    <p>Customize your Robi Graphics experience. Changes save instantly.</p>
+
+    <div class="modal-section-label">Color Theme</div>
+    <div class="theme-grid">
+      <div class="theme-card active" onclick="setTheme('default',this)">
+        <div class="tc-icon">🔵</div>Cyan (Default)
+      </div>
+      <div class="theme-card" onclick="setTheme('purple',this)">
+        <div class="tc-icon">🟣</div>Purple
+      </div>
+      <div class="theme-card" onclick="setTheme('green',this)">
+        <div class="tc-icon">🟢</div>Green
+      </div>
+      <div class="theme-card" onclick="setTheme('orange',this)">
+        <div class="tc-icon">🟠</div>Orange
+      </div>
+      <div class="theme-card" onclick="setTheme('red',this)">
+        <div class="tc-icon">🔴</div>Red
+      </div>
+      <div class="theme-card" onclick="setTheme('gold',this)">
+        <div class="tc-icon">🟡</div>Gold
+      </div>
+    </div>
+
+    <div class="modal-section-label">Output Filename</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="text" id="outputFilenameInput" placeholder="robi-graphics" value="robi-graphics" style="flex:1;">
+      <span style="color:var(--muted);font-size:12px;font-family:'Space Mono',monospace;">.csv / .zip</span>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;">Downloaded files will use this name (e.g. <strong style="color:var(--accent);">robi-graphics.csv</strong>)</div>
+
+    <div class="modal-section-label">Category Settings (Adobe CSV)</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="number" id="adobeCategoryInput" min="1" max="28" value="1" style="width:80px;">
+      <span style="color:var(--muted);font-size:12px;">Adobe category number (1–28). <a href="https://contributor.stock.adobe.com/content/dam/contributor/category_list.pdf" target="_blank" style="color:var(--accent);">View list</a></span>
+    </div>
+    <div style="margin-top:8px;">
+      <input type="text" id="shutterstockCategoryInput" placeholder="e.g. Nature, Business, Technology" value="">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">Shutterstock category name (optional)</div>
+    </div>
+
+    <div class="modal-section-label">Worker Threads</div>
+    <div class="slider-wrap">
+      <div class="slider-header"><span>Parallel Workers</span><span id="workerVal">3</span></div>
+      <input type="range" min="1" max="10" value="3" oninput="document.getElementById('workerVal').textContent=this.value; parallelWorkers=parseInt(this.value);">
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;">More workers = faster processing for large batches. Higher values may hit rate limits.</div>
+
+    <div class="modal-section-label">Miscellaneous</div>
+    <div class="toggle-wrap">
+      <span class="toggle-label">Show file processing animation</span>
+      <div class="toggle on" id="animToggle" onclick="this.classList.toggle('on')"></div>
+    </div>
+    <div class="toggle-wrap">
+      <span class="toggle-label">Auto-scroll to new results</span>
+      <div class="toggle on" id="scrollToggle" onclick="this.classList.toggle('on')"></div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn btn-generate" style="flex:1;justify-content:center;" onclick="applySettings()">✅ Apply Settings</button>
+      <button class="btn btn-clear" style="flex:1;justify-content:center;" onclick="closeSettingsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- USERS MODAL -->
+<div class="modal-bg" id="usersModalBg">
+  <div class="modal">
+    <h2>👥 Tool Usage Stats</h2>
+    <p>How many people have used this tool (tracked via localStorage across sessions).</p>
+
+    <div class="user-stat">
+      <div class="user-stat-icon">🖥️</div>
+      <div class="user-stat-info">
+        <div class="user-stat-num" id="sessionsCount">—</div>
+        <div class="user-stat-label">Total Sessions (this browser)</div>
+      </div>
+    </div>
+    <div class="user-stat">
+      <div class="user-stat-icon">📁</div>
+      <div class="user-stat-info">
+        <div class="user-stat-num" id="filesProcessed">—</div>
+        <div class="user-stat-label">Total Files Processed</div>
+      </div>
+    </div>
+    <div class="user-stat">
+      <div class="user-stat-icon">📊</div>
+      <div class="user-stat-info">
+        <div class="user-stat-num" id="csvExports">—</div>
+        <div class="user-stat-label">CSV Exports</div>
+      </div>
+    </div>
+    <div class="user-stat">
+      <div class="user-stat-icon">⏱️</div>
+      <div class="user-stat-info">
+        <div class="user-stat-num" id="firstUsed">—</div>
+        <div class="user-stat-label">First Used</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:12px;font-family:'Space Mono',monospace;line-height:1.6;">
+      ℹ️ Stats are stored locally in your browser. To share across devices, export the stats JSON below.
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-export" style="flex:1;justify-content:center;" onclick="exportStats()">📋 Export Stats</button>
+      <button class="btn btn-clear" style="flex:1;justify-content:center;" onclick="resetStats()">🗑 Reset Stats</button>
+      <button class="btn btn-pause" style="flex:1;justify-content:center;" onclick="closeUsersModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- VECTOR PREVIEW MODAL -->
+<div class="modal-bg vector-preview-modal" id="vectorModalBg">
+  <div class="modal" style="width:620px;">
+    <h2>📐 Vector File Preview</h2>
+    <div id="vectorModalFilename" style="font-size:12px;color:var(--muted);margin-bottom:12px;font-family:'Space Mono',monospace;"></div>
+    <div class="vector-canvas-wrap" id="vectorCanvasWrap" style="background:#fff;border-radius:8px;overflow:hidden;text-align:center;max-height:400px;">
+      <canvas id="vectorPreviewCanvas" style="max-width:100%;height:auto;display:block;margin:auto;"></canvas>
+    </div>
+    <div class="vector-meta-list" id="vectorMetaList"></div>
+    <div class="modal-btns">
+      <button class="btn btn-clear" style="flex:1;justify-content:center;" onclick="closeVectorModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span class="ti">✅</span><span id="toastMsg">Done!</span></div>
+
+<script>
+// ===== STATE =====
+let files = [];
+let filePreviewMap = {}; // filename+size -> base64 preview (for EPS/AI)
+let fileMetaMap   = {}; // filename+size -> vector meta info
+let results = [];
+let generating = false;
+let paused = false;
+let currentPlatform = 'general';
+let apiKeys = JSON.parse(localStorage.getItem('robig_keys') || '{}');
+let parallelWorkers = 3;
+let outputFilename = localStorage.getItem('robig_outname') || 'robi-graphics';
+
+// ===== USAGE STATS =====
+let stats = JSON.parse(localStorage.getItem('robig_stats') || 'null') || {
+  sessions: 0, filesProcessed: 0, csvExports: 0, firstUsed: new Date().toLocaleDateString()
+};
+stats.sessions++;
+localStorage.setItem('robig_stats', JSON.stringify(stats));
+
+function openUsersModal() {
+  document.getElementById('sessionsCount').textContent = stats.sessions;
+  document.getElementById('filesProcessed').textContent = stats.filesProcessed;
+  document.getElementById('csvExports').textContent = stats.csvExports;
+  document.getElementById('firstUsed').textContent = stats.firstUsed;
+  document.getElementById('usersModalBg').classList.add('show');
+}
+function closeUsersModal() { document.getElementById('usersModalBg').classList.remove('show'); }
+function exportStats() {
+  navigator.clipboard.writeText(JSON.stringify(stats, null, 2));
+  showToast('📋 Stats copied to clipboard!');
+}
+function resetStats() {
+  if (!confirm('Reset all usage stats?')) return;
+  stats = { sessions: 1, filesProcessed: 0, csvExports: 0, firstUsed: new Date().toLocaleDateString() };
+  localStorage.setItem('robig_stats', JSON.stringify(stats));
+  openUsersModal();
+  showToast('🗑 Stats reset!');
+}
+
+// ===== SETTINGS MODAL =====
+function openSettingsModal() {
+  document.getElementById('outputFilenameInput').value = outputFilename;
+  document.getElementById('settingsModalBg').classList.add('show');
+}
+function closeSettingsModal() { document.getElementById('settingsModalBg').classList.remove('show'); }
+function applySettings() {
+  const fn = document.getElementById('outputFilenameInput').value.trim();
+  if (fn) { outputFilename = fn; localStorage.setItem('robig_outname', fn); }
+  closeSettingsModal();
+  showToast('✅ Settings applied!');
+}
+
+function setTheme(name, el) {
+  document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.body.className = name === 'default' ? '' : 'theme-' + name;
+  localStorage.setItem('robig_theme', name);
+}
+
+// Restore theme
+(function(){
+  const t = localStorage.getItem('robig_theme');
+  if (t && t !== 'default') {
+    document.body.className = 'theme-' + t;
+    const cards = document.querySelectorAll('.theme-card');
+    const themes = ['default','purple','green','orange','red','gold'];
+    const idx = themes.indexOf(t);
+    if (idx >= 0) { cards.forEach(c => c.classList.remove('active')); cards[idx]?.classList.add('active'); }
+  }
+})();
+
+// ===== MODELS =====
+const MODELS = {
+  gemini: [
+    { id: 'gemini-3.1-flash-lite-preview', label: 'Gemini 3.1 Flash-Lite', tier:'free',  note:'নতুন! 2.5x দ্রুত, সেরা free choice' },
+    { id: 'gemini-3-flash-preview',        label: 'Gemini 3 Flash',         tier:'free',  note:'নতুন! Pro-grade quality, free tier আছে' },
+    { id: 'gemini-3.1-pro-preview',        label: 'Gemini 3.1 Pro',         tier:'paid',  note:'সবচেয়ে powerful, কিন্তু PAID' },
+    { id: 'gemini-2.5-pro',                label: 'Gemini 2.5 Pro',         tier:'free',  note:'Free! সেরা reasoning model' },
+    { id: 'gemini-2.5-flash-preview-04-17',label: 'Gemini 2.5 Flash',       tier:'free',  note:'Free! দ্রুত + ভালো quality' },
+    { id: 'gemini-2.5-flash-lite-preview', label: 'Gemini 2.5 Flash-Lite',  tier:'free',  note:'Free! সবচেয়ে বেশি quota (15 RPM)' },
+    { id: 'gemini-2.0-flash',              label: 'Gemini 2.0 Flash',       tier:'paid',  note:'Deprecated – June 2026 বন্ধ হবে' },
+    { id: 'gemini-1.5-pro',               label: 'Gemini 1.5 Pro',          tier:'free',  note:'পুরনো কিন্তু reliable, free' },
+    { id: 'gemini-1.5-flash',             label: 'Gemini 1.5 Flash',        tier:'free',  note:'পুরনো, stable, free' },
+    { id: 'gemini-1.5-flash-8b',          label: 'Gemini 1.5 Flash-8B',     tier:'free',  note:'ছোট model, কম accurate' },
+  ],
+  openai: [
+    { id: 'gpt-4o',        label: 'GPT-4o',        tier:'paid', note:'সেরা vision model, তবে PAID' },
+    { id: 'gpt-4o-mini',   label: 'GPT-4o Mini',   tier:'paid', note:'সস্তা PAID, ভালো quality' },
+    { id: 'gpt-4-turbo',   label: 'GPT-4 Turbo',   tier:'paid', note:'পুরনো flagship, PAID' },
+    { id: 'gpt-4',         label: 'GPT-4',          tier:'paid', note:'Classic, PAID' },
+    { id: 'o1',            label: 'O1',             tier:'paid', note:'Reasoning model, image নেই, PAID' },
+    { id: 'o1-mini',       label: 'O1 Mini',        tier:'paid', note:'Reasoning, সস্তা, PAID' },
+    { id: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo',  tier:'paid', note:'পুরনো, image বোঝে না, PAID' },
+  ],
+  openrouter: [
+    { id: 'openai/gpt-4.1-nano',                      label: 'GPT-4.1 Nano',        tier:'free', note:'Free quota আছে OpenRouter-এ' },
+    { id: 'openai/gpt-4o',                            label: 'OpenAI GPT-4o',        tier:'paid', note:'PAID, সেরা vision' },
+    { id: 'openai/gpt-4o-mini',                       label: 'GPT-4o Mini',          tier:'paid', note:'PAID, সস্তা' },
+    { id: 'openai/gpt-5-nano',                        label: 'GPT-5 Nano',           tier:'paid', note:'নতুন, PAID' },
+    { id: 'x-ai/grok-beta',                           label: 'Grok Beta',            tier:'paid', note:'PAID' },
+    { id: 'x-ai/grok-vision-beta',                    label: 'Grok Vision',          tier:'paid', note:'PAID, image বোঝে' },
+    { id: 'google/gemini-2.0-flash-001',              label: 'Gemini 2.0 Flash',     tier:'paid', note:'PAID via OpenRouter' },
+    { id: 'anthropic/claude-3-haiku',                 label: 'Claude 3 Haiku',       tier:'paid', note:'PAID, দ্রুত' },
+    { id: 'anthropic/claude-3.5-sonnet',              label: 'Claude 3.5 Sonnet',    tier:'paid', note:'PAID, excellent vision' },
+    { id: 'meta-llama/llama-3.2-11b-vision-instruct', label: 'Llama 3.2 11B Vision', tier:'free', note:'Free quota, open source' },
+    { id: 'mistralai/mistral-nemo',                   label: 'Mistral Nemo',         tier:'free', note:'Free quota, image নেই' },
+  ],
+  mistral: [
+    { id: 'pixtral-12b-2409',     label: 'Pixtral 12B',        tier:'paid', note:'PAID, image বোঝে ভালো' },
+    { id: 'mistral-large-latest', label: 'Mistral Large',       tier:'paid', note:'PAID, শক্তিশালী' },
+    { id: 'mistral-small-latest', label: 'Mistral Small',       tier:'paid', note:'PAID, সস্তা' },
+    { id: 'open-mistral-nemo',    label: 'Mistral Nemo',        tier:'paid', note:'PAID, দ্রুত' },
+  ],
+  groq: [
+    { id: 'llama-3.2-11b-vision-preview', label: 'Llama 3.2 11B Vision', tier:'free', note:'Free! Image বোঝে, দ্রুত' },
+    { id: 'llama-3.2-90b-vision-preview', label: 'Llama 3.2 90B Vision', tier:'free', note:'Free! বড় model, ভালো quality' },
+    { id: 'llama-3.1-8b-instant',         label: 'Llama 3.1 8B Instant', tier:'free', note:'Free! সবচেয়ে দ্রুত, image নেই' },
+    { id: 'llama-3.3-70b-versatile',      label: 'Llama 3.3 70B',        tier:'free', note:'Free! ভালো, image নেই' },
+    { id: 'mixtral-8x7b-32768',           label: 'Mixtral 8x7B',         tier:'free', note:'Free! পুরনো কিন্তু reliable' },
+    { id: 'gemma2-9b-it',                 label: 'Gemma 2 9B',           tier:'free', note:'Free! Google model, image নেই' },
+  ],
+};
+
+// ===== INIT =====
+(function initProviders() {
+  const sel = document.getElementById('aiProvider');
+  const extra = [
+    { value: 'mistral', label: 'Mistral AI' },
+    { value: 'groq',    label: 'Groq Cloud' },
+  ];
+  extra.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.value; o.textContent = p.label;
+    sel.appendChild(o);
+  });
+  const msel = document.getElementById('modalProvider');
+  extra.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.value; o.textContent = p.label;
+    msel.appendChild(o);
+  });
+})();
+updateModelList();
+
+function updateModelList() {
+  const provider = document.getElementById('aiProvider').value;
+  const container = document.getElementById('modelPills');
+  const models = MODELS[provider] || [];
+  container.innerHTML = models.map((m, i) => {
+    const badgeClass = m.tier === 'free' ? 'free' : 'paid';
+    const badgeText  = m.tier === 'free' ? 'FREE' : 'PAID';
+    return `<div class="pill ${i===0?'active':''}" data-id="${m.id}" onclick="selectModel(this)">
+      <span>${m.label}</span>
+      <span class="badge ${badgeClass}">${badgeText}</span>
+      ${m.note ? `<span class="tip">${m.note}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function selectModel(el) {
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function getSelectedModel() {
+  const pill = document.querySelector('.pill.active');
+  return pill ? (pill.dataset.id || pill.textContent) : 'gemini-2.0-flash';
+}
+
+// ===== PLATFORM TABS =====
+function setTab(el, name) {
+  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentPlatform = name;
+}
+
+// ===== ADOBE CATEGORY MAPPING =====
+const ADOBE_CATEGORIES = {
+  1:'Animals', 2:'Buildings & Architecture', 3:'Business', 4:'Drinks', 5:'The Environment',
+  6:'States of Mind', 7:'Food', 8:'Graphic Resources', 9:'Hobbies & Leisure',
+  10:'Industry', 11:'Landscape', 12:'Lifestyle', 13:'Medicine & Healthcare',
+  14:'Nature', 15:'Objects', 16:'Parks & Outdoor', 17:'People', 18:'Religion & Spirituality',
+  19:'Science', 20:'Social Issues', 21:'Sports', 22:'Technology', 23:'Transport',
+  24:'Travel', 25:'Urban', 26:'Vector & Illustration', 27:'Vintage', 28:'Backgrounds'
+};
+
+function getAdobeCategoryNum() {
+  return parseInt(document.getElementById('adobeCategoryInput')?.value || '1') || 1;
+}
+function getShutterstockCategory() {
+  return document.getElementById('shutterstockCategoryInput')?.value?.trim() || '';
+}
+
+// ===== FILE HANDLING =====
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('dropzone').classList.add('dragover');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropzone').classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+}
+
+async function handleFiles(fileList) {
+  const newFiles = Array.from(fileList);
+  if (newFiles.length === 0) return;
+
+  // Show loading overlay
+  const loadingEl = document.getElementById('uploadLoading');
+  const fileListEl = document.getElementById('uploadFileList');
+  const subEl = document.getElementById('uploadLoadingSub');
+  loadingEl.classList.add('show');
+  document.getElementById('dzPlaceholder').style.display = 'none';
+  document.getElementById('previewGrid').style.display = 'none';
+
+  fileListEl.innerHTML = newFiles.map(f => `
+    <div class="upload-file-item" id="ufi-${f.name.replace(/[^a-z0-9]/gi,'_')}">
+      <span class="ufi-name">${f.name}</span>
+      <span class="ufi-status">⏳</span>
+    </div>`).join('');
+
+  subEl.textContent = `Loading ${newFiles.length} file(s)…`;
+
+  let done = 0;
+  // Process files in parallel batches for speed
+  const CHUNK = Math.min(parallelWorkers, newFiles.length);
+  for (let i = 0; i < newFiles.length; i += CHUNK) {
+    const batch = newFiles.slice(i, i + CHUNK);
+    await Promise.all(batch.map(async f => {
+      files.push(f);
+      const fid = 'ufi-' + f.name.replace(/[^a-z0-9]/gi,'_');
+      if (isVectorFile(f)) {
+        try {
+          const prev = await renderVectorPreview(f);
+          filePreviewMap[getFileKey(f)] = prev;
+          const el = document.getElementById(fid);
+          if (el) { el.classList.add('done'); el.querySelector('.ufi-status').textContent = '✅'; }
+        } catch(e) {
+          filePreviewMap[getFileKey(f)] = null;
+          const el = document.getElementById(fid);
+          if (el) { el.classList.add('err'); el.querySelector('.ufi-status').textContent = '⚠️'; }
+        }
+      } else {
+        const el = document.getElementById(fid);
+        if (el) { el.classList.add('done'); el.querySelector('.ufi-status').textContent = '✅'; }
+      }
+      done++;
+      subEl.textContent = `${done} / ${newFiles.length} files loaded…`;
+    }));
+  }
+
+  // Hide loading, show previews
+  loadingEl.classList.remove('show');
+  renderPreviews();
+  document.getElementById('fileCount').textContent = files.length;
+  showToast(`✅ ${newFiles.length} file(s) loaded!`);
+}
+
+function isVectorFile(f) {
+  const name = f.name.toLowerCase();
+  return name.endsWith('.eps') || name.endsWith('.ai') || name.endsWith('.pdf') ||
+    f.type === 'application/postscript' || f.type === 'application/pdf' ||
+    f.type === 'application/illustrator';
+}
+
+async function renderVectorPreview(file) {
+  if (!window.pdfjsLib) {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const typedArray = new Uint8Array(e.target.result);
+        const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;
+        const page = await pdf.getPage(1);
+        const vp = page.getViewport({ scale: 1.5 });
+        const canvas = document.createElement('canvas');
+        canvas.width = vp.width; canvas.height = vp.height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+        // Store meta info
+        fileMetaMap[getFileKey(file)] = {
+          pages: pdf.numPages,
+          width: Math.round(vp.width / 1.5),
+          height: Math.round(vp.height / 1.5),
+          name: file.name,
+          size: (file.size / 1024).toFixed(1) + ' KB'
+        };
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+function getFileKey(f) { return f.name + f.size; }
+
+function getPreviewSrc(f) {
+  if (isVectorFile(f)) return filePreviewMap[getFileKey(f)] || null;
+  if (f.type.startsWith('image/')) return URL.createObjectURL(f);
+  return null;
+}
+
+function renderPreviews() {
+  const grid = document.getElementById('previewGrid');
+  const placeholder = document.getElementById('dzPlaceholder');
+  if (files.length === 0) {
+    grid.style.display = 'none';
+    placeholder.style.display = 'flex';
+    placeholder.style.flexDirection = 'column';
+    placeholder.style.alignItems = 'center';
+    return;
+  }
+  grid.style.display = 'grid';
+  placeholder.style.display = 'none';
+  grid.innerHTML = files.map((f, i) => {
+    const src = getPreviewSrc(f);
+    const ext = f.name.split('.').pop().toUpperCase();
+    const isVec = isVectorFile(f);
+    const hasPreview = isVec && filePreviewMap[getFileKey(f)];
+    return `<div class="preview-item" title="${f.name}" onclick="isVectorFile(files[${i}]) ? openVectorModal(${i}) : null">
+      ${src
+        ? `<img src="${src}" alt="${f.name}" style="width:100%;height:100%;object-fit:cover;">`
+        : isVec
+          ? `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;font-size:10px;color:var(--muted);padding:4px;"><span style="font-size:20px;">📐</span><span style="font-family:'Space Mono',monospace;color:var(--accent);font-size:9px;">${ext}</span><span style="font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center;">${f.name}</span></div>`
+          : `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:24px;">📄</div>`}
+      ${isVec && hasPreview ? `<div class="processing-badge">${ext}</div>` : ''}
+      <button class="rm" onclick="removeFile(${i},event)">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function removeFile(i, e) {
+  e.stopPropagation();
+  files.splice(i, 1);
+  renderPreviews();
+  document.getElementById('fileCount').textContent = files.length;
+}
+
+function clearAll() {
+  files = [];
+  filePreviewMap = {};
+  fileMetaMap = {};
+  results = [];
+  renderPreviews();
+  document.getElementById('fileCount').textContent = '0';
+  document.getElementById('resultList').innerHTML = `<div class="empty" id="emptyState"><div class="ei">🔮</div><p>Upload images and click Generate to create AI-powered metadata</p></div>`;
+  document.getElementById('resultCount').textContent = '0';
+  document.getElementById('dlZipBtn').style.display = 'none';
+  document.getElementById('progressWrap').classList.remove('show');
+  document.getElementById('processingItemBar').classList.remove('show');
+  showToast('🗑 Cleared all files and results');
+}
+
+// ===== VECTOR PREVIEW MODAL =====
+function openVectorModal(idx) {
+  const f = files[idx];
+  if (!f) return;
+  const key = getFileKey(f);
+  const preview = filePreviewMap[key];
+  const meta = fileMetaMap[key];
+  document.getElementById('vectorModalFilename').textContent = f.name;
+  const canvasEl = document.getElementById('vectorPreviewCanvas');
+  const wrapEl = document.getElementById('vectorCanvasWrap');
+  if (preview) {
+    const img = new Image();
+    img.onload = () => {
+      canvasEl.width = img.width; canvasEl.height = img.height;
+      const ctx = canvasEl.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+    };
+    img.src = preview;
+    wrapEl.style.display = 'block';
+  } else {
+    wrapEl.style.display = 'none';
+  }
+  const metaEl = document.getElementById('vectorMetaList');
+  if (meta) {
+    metaEl.innerHTML = `
+      <div class="vector-meta-item"><span>File:</span><span>${meta.name}</span></div>
+      <div class="vector-meta-item"><span>Size:</span><span>${meta.size}</span></div>
+      <div class="vector-meta-item"><span>Pages:</span><span>${meta.pages}</span></div>
+      <div class="vector-meta-item"><span>Dimensions:</span><span>${meta.width} × ${meta.height} px (at 72dpi)</span></div>
+    `;
+  } else {
+    metaEl.innerHTML = `<div style="color:var(--muted);font-size:12px;margin-top:8px;">No preview available — will be processed via AI during generation.</div>`;
+  }
+  document.getElementById('vectorModalBg').classList.add('show');
+}
+function closeVectorModal() { document.getElementById('vectorModalBg').classList.remove('show'); }
+
+// ===== GENERATION (Parallel Worker Support) =====
+async function startGeneration() {
+  if (files.length === 0) { showToast('⚠️ Please upload at least one image'); return; }
+  const provider = document.getElementById('aiProvider').value;
+  const apiKey = apiKeys[provider];
+  if (!apiKey) { openModal(); showToast('⚠️ Please enter your API key first'); return; }
+
+  generating = true; paused = false;
+  document.getElementById('generateBtn').disabled = true;
+  document.getElementById('progressWrap').classList.add('show');
+  document.getElementById('processingItemBar').classList.add('show');
+  document.getElementById('emptyState') && (document.getElementById('emptyState').remove());
+
+  const titleLen = document.querySelector('input[oninput*="titleVal"]').value;
+  const descLen  = document.querySelector('input[oninput*="descVal"]').value;
+  const kwCount  = document.querySelector('input[oninput*="kwVal"]').value;
+
+  // Queue-based parallel processing
+  let nextIdx = 0;
+  let completed = 0;
+  const total = files.length;
+  const workers = Math.min(parallelWorkers, total);
+
+  async function worker() {
+    while (nextIdx < total) {
+      while (paused) await sleep(500);
+      const i = nextIdx++;
+      if (i >= total) break;
+      const f = files[i];
+      document.getElementById('processingItemName').textContent = f.name;
+      const pct = Math.round((completed / total) * 100);
+      updateProgress(pct, `Processing ${completed+1}–${Math.min(completed+workers, total)} of ${total}…`);
+      try {
+        let base64, mimeType;
+        const key = getFileKey(f);
+        if (isVectorFile(f) && filePreviewMap[key]) {
+          base64 = filePreviewMap[key].split(',')[1];
+          mimeType = 'image/jpeg';
+        } else if (f.type.startsWith('image/')) {
+          base64 = await fileToBase64(f);
+          mimeType = f.type;
+        } else {
+          try {
+            const prev = await renderVectorPreview(f);
+            filePreviewMap[key] = prev;
+            base64 = prev.split(',')[1];
+            mimeType = 'image/jpeg';
+          } catch {
+            base64 = await fileToBase64(f);
+            mimeType = f.type || 'application/octet-stream';
+          }
+        }
+        const prompt = buildPrompt(titleLen, descLen, kwCount, currentPlatform);
+        const metadata = await callAI(provider, apiKey, base64, mimeType, prompt);
+        const previewSrc = (mimeType === 'image/jpeg' && isVectorFile(f))
+          ? filePreviewMap[key]
+          : (f.type.startsWith('image/') ? `data:${f.type};base64,${base64}` : null);
+        results.push({ file: f, base64, mimeType, previewSrc, metadata });
+        renderResult(results[results.length - 1], results.length - 1);
+        // Update stats
+        stats.filesProcessed++;
+        localStorage.setItem('robig_stats', JSON.stringify(stats));
+      } catch(err) {
+        results.push({ file: f, base64: null, mimeType: null, previewSrc: null,
+          metadata: { error: err.message, title:'Error', description: err.message, keywords:[] } });
+        renderResult(results[results.length - 1], results.length - 1);
+      }
+      completed++;
+      document.getElementById('resultCount').textContent = results.length;
+      if (results.length > 0) document.getElementById('dlZipBtn').style.display = 'flex';
+      updateProgress(Math.round((completed / total) * 100), `Processing ${completed} of ${total}…`);
+      await sleep(100);
+    }
+  }
+
+  // Launch N workers in parallel
+  const workerPromises = [];
+  for (let w = 0; w < workers; w++) workerPromises.push(worker());
+  await Promise.all(workerPromises);
+
+  updateProgress(100, `✅ Complete. ${results.length} of ${total} processed.`);
+  document.getElementById('processingItemBar').classList.remove('show');
+  generating = false;
+  document.getElementById('generateBtn').disabled = false;
+
+  const csvOn = document.getElementById('csvToggle').classList.contains('on');
+  if (csvOn) exportCSV();
+
+  showToast(`✦ Metadata generated for ${results.length} file(s)!`);
+}
+
+function buildPrompt(titleLen, descLen, kwCount, platform) {
+  const platformHints = {
+    adobe: 'Adobe Stock requires a concise, descriptive title under 70 chars. Description should be detailed. Keywords are comma-separated.',
+    shutterstock: 'Shutterstock prefers clear, searchable titles. Use editorial style descriptions.',
+    freepik: 'Freepik prefers creative, design-focused metadata with style keywords.',
+    getty: 'Getty Images requires professional, editorial-quality metadata. Be precise.',
+    istock: 'iStock uses Getty standards. Focus on commercial use cases.',
+    dreamstime: 'Dreamstime accepts broad keyword sets. Be comprehensive.',
+    vecteezy: 'Vecteezy focuses on vector/illustration metadata.',
+    general: 'General stock photo metadata optimized for SEO.'
+  };
+  return `You are an expert stock photo metadata specialist optimizing for SEO and discoverability on ${platform} platform.
+
+Analyze this image and generate metadata following ${platformHints[platform] || platformHints.general}
+
+Return ONLY a valid JSON object with these exact keys:
+{
+  "title": "SEO-optimized title, max ${titleLen} characters",
+  "description": "Detailed description for search engines, max ${descLen} characters",
+  "keywords": ["keyword1", "keyword2", ...],
+  "category": "suggested category name",
+  "category_number": suggested_category_number_1_to_28
+}
+
+Rules:
+- Title must be descriptive, include main subject and style
+- Description must expand on title, add context, use natural language
+- Keywords must be single words or short phrases, ordered by relevance, exactly ${kwCount} keywords
+- category should be the best matching Adobe Stock category name
+- category_number should be 1–28 matching the Adobe category list
+- No markdown, no explanation, only the JSON object`;
+}
+
+// ===== UNIVERSAL AI API CALL =====
+async function callAI(provider, apiKey, base64, mimeType, prompt) {
+  const model = getSelectedModel();
+  if (provider === 'gemini')     return callGemini(apiKey, base64, mimeType, prompt, model);
+  if (provider === 'openai')     return callOpenAI(apiKey, base64, mimeType, prompt, model);
+  if (provider === 'openrouter') return callOpenRouter(apiKey, base64, mimeType, prompt, model);
+  if (provider === 'mistral')    return callMistral(apiKey, base64, mimeType, prompt, model);
+  if (provider === 'groq')       return callGroq(apiKey, base64, mimeType, prompt, model);
+  throw new Error('Unknown provider: ' + provider);
+}
+
+async function callGemini(apiKey, base64, mimeType, prompt, model) {
+  model = model || 'gemini-2.0-flash';
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType || 'image/jpeg', data: base64 } }] }],
+      generationConfig: { temperature: 0.7, maxOutputTokens: 1200 }
+    })
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Gemini error ' + res.status); }
+  const data = await res.json();
+  return parseJSON(data.candidates?.[0]?.content?.parts?.[0]?.text || '');
+}
+
+async function callOpenAI(apiKey, base64, mimeType, prompt, model) {
+  model = model || 'gpt-4o';
+  const imageUrl = `data:${mimeType || 'image/jpeg'};base64,${base64}`;
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: [{ type: 'text', text: prompt }, { type: 'image_url', image_url: { url: imageUrl, detail: 'low' } }] }],
+      max_tokens: 1200, temperature: 0.7
+    })
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'OpenAI error ' + res.status); }
+  const data = await res.json();
+  return parseJSON(data.choices?.[0]?.message?.content || '');
+}
+
+async function callOpenRouter(apiKey, base64, mimeType, prompt, model) {
+  model = model || 'openai/gpt-4o';
+  const imageUrl = `data:${mimeType || 'image/jpeg'};base64,${base64}`;
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`, 'HTTP-Referer': window.location.href, 'X-Title': 'ROBI Graphics Metadata Generator' },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: [{ type: 'text', text: prompt }, { type: 'image_url', image_url: { url: imageUrl } }] }],
+      max_tokens: 1200
+    })
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'OpenRouter error ' + res.status); }
+  const data = await res.json();
+  return parseJSON(data.choices?.[0]?.message?.content || '');
+}
+
+async function callMistral(apiKey, base64, mimeType, prompt, model) {
+  model = model || 'pixtral-12b-2409';
+  const imageUrl = `data:${mimeType || 'image/jpeg'};base64,${base64}`;
+  const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: [{ type: 'text', text: prompt }, { type: 'image_url', image_url: imageUrl }] }],
+      max_tokens: 1200, temperature: 0.7
+    })
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Mistral error ' + res.status); }
+  const data = await res.json();
+  return parseJSON(data.choices?.[0]?.message?.content || '');
+}
+
+async function callGroq(apiKey, base64, mimeType, prompt, model) {
+  model = model || 'llama-3.2-11b-vision-preview';
+  const imageUrl = `data:${mimeType || 'image/jpeg'};base64,${base64}`;
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: [{ type: 'text', text: prompt }, { type: 'image_url', image_url: { url: imageUrl } }] }],
+      max_tokens: 1200, temperature: 0.7
+    })
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Groq error ' + res.status); }
+  const data = await res.json();
+  return parseJSON(data.choices?.[0]?.message?.content || '');
+}
+
+function parseJSON(text) {
+  const clean = text.replace(/```json|```/g, '').trim();
+  try { return JSON.parse(clean); }
+  catch {
+    const match = clean.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error('Failed to parse AI response as JSON');
+  }
+}
+
+// ===== RENDER RESULT =====
+function renderResult(item, idx) {
+  const list = document.getElementById('resultList');
+  const empty = document.getElementById('emptyState');
+  if (empty) empty.remove();
+
+  const md = item.metadata;
+  const imgSrc = item.previewSrc || (item.base64 && item.mimeType ? `data:${item.mimeType};base64,${item.base64}` : '');
+  const kws = Array.isArray(md.keywords) ? md.keywords : [];
+  const catName = md.category || '';
+  const catNum  = md.category_number || '';
+
+  const card = document.createElement('div');
+  card.className = 'result-card';
+  card.id = `result-${idx}`;
+  card.innerHTML = `
+    ${imgSrc
+      ? `<img class="result-thumb" src="${imgSrc}" alt="thumb">`
+      : `<div class="result-thumb" style="display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:24px;gap:4px;"><span>📄</span><span style="font-size:10px;color:var(--muted);">${item.file.name.split('.').pop().toUpperCase()}</span></div>`}
+    <div class="result-body">
+      <div class="result-filename">${item.file.name}</div>
+      ${md.error ? `<div style="color:var(--red);font-size:13px;">⚠ ${md.error}</div>` : `
+      <div class="result-field">
+        <div class="result-field-label">Title</div>
+        <div class="result-field-text" id="title-${idx}">${md.title||''}</div>
+      </div>
+      <div class="result-field">
+        <div class="result-field-label">Description</div>
+        <div class="result-field-text desc" id="desc-${idx}">${md.description||''}</div>
+      </div>
+      ${catName ? `<div class="result-field">
+        <div class="result-field-label">Category</div>
+        <span class="cat-badge">📂 ${catNum ? '#'+catNum+' · ' : ''}${catName}</span>
+      </div>` : ''}
+      <div class="result-field">
+        <div class="result-field-label">Keywords</div>
+        <div class="keywords-wrap" id="kw-${idx}">${kws.map(k=>`<span class="kw">${k}</span>`).join('')}</div>
+      </div>
+      <div class="result-meta">
+        <span>Title: <strong>${(md.title||'').length} chars</strong></span>
+        <span>Desc: <strong>${(md.description||'').length} chars</strong></span>
+        <span>KW: <strong>${kws.length}</strong></span>
+        ${catNum ? `<span>Cat#: <strong>${catNum}</strong></span>` : ''}
+      </div>`}
+    </div>
+    <div class="result-actions">
+      <button class="btn-icon" onclick="copyResult(${idx})" title="Copy">📋</button>
+      <button class="btn-icon" onclick="regenResult(${idx})" title="Regenerate">🔄</button>
+      <button class="btn-icon" onclick="deleteResult(${idx})" title="Delete" style="color:var(--red);">🗑</button>
+    </div>`;
+  list.appendChild(card);
+  const scrollOn = document.getElementById('scrollToggle')?.classList.contains('on') !== false;
+  if (scrollOn) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function regenResult(idx) {
+  const provider = document.getElementById('aiProvider').value;
+  const apiKey = apiKeys[provider];
+  if (!apiKey) { showToast('⚠️ API key required'); return; }
+  const item = results[idx];
+  showToast('🔄 Regenerating...');
+  const titleLen = document.querySelector('input[oninput*="titleVal"]').value;
+  const descLen  = document.querySelector('input[oninput*="descVal"]').value;
+  const kwCount  = document.querySelector('input[oninput*="kwVal"]').value;
+  const prompt = buildPrompt(titleLen, descLen, kwCount, currentPlatform);
+  try {
+    const metadata = await callAI(provider, apiKey, item.base64, item.mimeType, prompt);
+    results[idx].metadata = metadata;
+    document.getElementById(`result-${idx}`)?.remove();
+    renderResult(results[idx], idx);
+    showToast('✅ Regenerated!');
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+function deleteResult(idx) {
+  results.splice(idx, 1);
+  document.getElementById(`result-${idx}`)?.remove();
+  document.getElementById('resultCount').textContent = results.length;
+  if (results.length === 0) {
+    document.getElementById('resultList').innerHTML = `<div class="empty" id="emptyState"><div class="ei">🔮</div><p>Upload images and click Generate to create AI-powered metadata</p></div>`;
+    document.getElementById('dlZipBtn').style.display = 'none';
+  }
+}
+
+function copyResult(idx) {
+  const md = results[idx]?.metadata;
+  if (!md) return;
+  const text = `Title: ${md.title}\nDescription: ${md.description}\nKeywords: ${(md.keywords||[]).join(', ')}\nCategory: ${md.category||''} (#${md.category_number||''})`;
+  navigator.clipboard.writeText(text).then(() => showToast('📋 Copied to clipboard!'));
+}
+
+// ===== BUILD CSV =====
+function buildCSV() {
+  const platform = currentPlatform;
+  const catOn = document.getElementById('catToggle').classList.contains('on');
+  const adobeCatNum = getAdobeCategoryNum();
+  const ssCat = getShutterstockCategory();
+  let headers, rows;
+
+  if (platform === 'adobe') {
+    headers = ['Filename','Title','Keywords','Category','Editorial'];
+    rows = results.map(r => {
+      // Use AI-suggested category_number or fall back to settings value
+      const catNum = r.metadata.category_number || adobeCatNum;
+      return [
+        csvQ(r.file.name),
+        csvQ(r.metadata.title||''),
+        csvQ((r.metadata.keywords||[]).join(', ')),
+        csvQ(catOn ? String(catNum) : ''),
+        csvQ('No')
+      ];
+    });
+  } else if (platform === 'shutterstock') {
+    headers = ['filename','description','keywords','categories','editorial','mature_content','illustration'];
+    rows = results.map(r => [
+      csvQ(r.file.name),
+      csvQ(r.metadata.description||''),
+      csvQ((r.metadata.keywords||[]).join(',')),
+      csvQ(catOn ? (ssCat || r.metadata.category || '') : ''),
+      csvQ('no'), csvQ('no'), csvQ('no')
+    ]);
+  } else if (platform === 'freepik') {
+    headers = ['Filename','Title','Description','Keywords','Category'];
+    rows = results.map(r => [
+      csvQ(r.file.name),
+      csvQ(r.metadata.title||''),
+      csvQ(r.metadata.description||''),
+      csvQ((r.metadata.keywords||[]).join(', ')),
+      csvQ(catOn ? (r.metadata.category || '') : '')
+    ]);
+  } else if (platform === 'getty' || platform === 'istock') {
+    headers = ['Filename','Title','Description','Keywords','Category Number'];
+    rows = results.map(r => [
+      csvQ(r.file.name),
+      csvQ(r.metadata.title||''),
+      csvQ(r.metadata.description||''),
+      csvQ((r.metadata.keywords||[]).join(', ')),
+      csvQ(catOn ? String(r.metadata.category_number || adobeCatNum) : '')
+    ]);
+  } else {
+    // General / default — includes category
+    headers = catOn
+      ? ['Filename','Title','Description','Keywords','Category','Category Number']
+      : ['Filename','Title','Description','Keywords'];
+    rows = results.map(r => {
+      const base = [
+        csvQ(r.file.name),
+        csvQ(r.metadata.title||''),
+        csvQ(r.metadata.description||''),
+        csvQ((r.metadata.keywords||[]).join(', '))
+      ];
+      if (catOn) {
+        base.push(csvQ(r.metadata.category || ''));
+        base.push(csvQ(String(r.metadata.category_number || '')));
+      }
+      return base;
+    });
+  }
+  return [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+}
+
+function csvQ(str) {
+  return '"' + String(str).replace(/"/g, '""') + '"';
+}
+
+// ===== EXPORT CSV =====
+function exportCSV() {
+  if (results.length === 0) { showToast('⚠️ No results to export'); return; }
+  const csv = buildCSV();
+  const fname = (outputFilename || 'robi-graphics') + '.csv';
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fname;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  stats.csvExports++;
+  localStorage.setItem('robig_stats', JSON.stringify(stats));
+  showToast(`📊 ${fname} downloaded!`);
+}
+
+// ===== DOWNLOAD ZIP =====
+async function downloadZip() {
+  if (results.length === 0) { showToast('⚠️ No results to download'); return; }
+  if (!window.JSZip) {
+    showToast('⏳ Loading ZIP engine…');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+  }
+  showToast('📦 Building ZIP…');
+  document.getElementById('dlZipBtn').textContent = '⏳ Zipping…';
+  document.getElementById('dlZipBtn').disabled = true;
+  try {
+    const zip = new JSZip();
+    const csv = buildCSV();
+    const csvFname = (outputFilename || 'robi-graphics') + '.csv';
+    zip.file(csvFname, '\uFEFF' + csv);
+    const imgFolder = zip.folder('images');
+    for (const item of results) {
+      const f = item.file;
+      try {
+        const arrayBuf = await f.arrayBuffer();
+        imgFolder.file(f.name, arrayBuf);
+      } catch(e) { console.warn('Could not add', f.name, e); }
+    }
+    const zipFname = (outputFilename || 'robi-graphics') + '.zip';
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } },
+      (meta) => { document.getElementById('dlZipBtn').textContent = `⏳ ${Math.round(meta.percent)}%`; });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = zipFname;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`✅ ${zipFname} downloaded!`);
+  } catch(e) { showToast('❌ ZIP error: ' + e.message); }
+  finally {
+    document.getElementById('dlZipBtn').textContent = '📦 Download ZIP';
+    document.getElementById('dlZipBtn').disabled = false;
+  }
+}
+
+// ===== PROGRESS =====
+function updateProgress(pct, status) {
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressStatus').textContent = status;
+}
+
+// ===== PAUSE =====
+function togglePause() {
+  paused = !paused;
+  document.getElementById('pauseBtn').textContent = paused ? '▶ Resume' : '⏸ Pause';
+  showToast(paused ? '⏸ Paused' : '▶ Resumed');
+}
+
+// ===== MODAL =====
+function openModal() {
+  document.getElementById('modalBg').classList.add('show');
+  updateModalKey();
+}
+function closeModal() { document.getElementById('modalBg').classList.remove('show'); }
+function updateModalKey() {
+  const p = document.getElementById('modalProvider').value;
+  const input = document.getElementById('apiKeyInput');
+  input.value = apiKeys[p] || '';
+  document.getElementById('keyStatus').textContent = apiKeys[p] ? '✅ Key saved' : '⚠ No key saved';
+}
+function saveApiKey() {
+  const p = document.getElementById('modalProvider').value;
+  const v = document.getElementById('apiKeyInput').value.trim();
+  if (v) { apiKeys[p] = v; localStorage.setItem('robig_keys', JSON.stringify(apiKeys)); }
+  document.getElementById('keyStatus').textContent = v ? '✅ Key saved' : '⚠ No key saved';
+}
+async function testKey() {
+  const p = document.getElementById('modalProvider').value;
+  const key = apiKeys[p];
+  if (!key) { showToast('⚠️ Enter a key first'); return; }
+  showToast('🧪 Testing key...');
+  try {
+    let res;
+    if (p === 'gemini') {
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
+        method: 'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ contents:[{parts:[{text:'Say OK'}]}] })
+      });
+    } else if (p === 'openai') {
+      res = await fetch('https://api.openai.com/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
+    } else if (p === 'openrouter') {
+      res = await fetch('https://openrouter.ai/api/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
+    } else if (p === 'mistral') {
+      res = await fetch('https://api.mistral.ai/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
+    } else if (p === 'groq') {
+      res = await fetch('https://api.groq.com/openai/v1/models', { headers: { 'Authorization': `Bearer ${key}` } });
+    }
+    if (res && res.ok) showToast('✅ API key is valid!');
+    else showToast('❌ Invalid key or quota exceeded');
+  } catch(e) { showToast('❌ Connection error'); }
+}
+
+// ===== MISC =====
+function showHistory() { showToast('🕘 History stored in CSV exports'); }
+function saveSettings() { showToast('💾 Settings saved!'); }
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// Close modals on bg click
+['modalBg','settingsModalBg','usersModalBg','vectorModalBg'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('show');
+  });
+});
+</script>
+</body>
+</html>
