@@ -457,6 +457,102 @@
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
+  /* HISTORY MODAL */
+  .history-empty { text-align:center; padding:32px; color:var(--muted); font-size:13px; }
+  .history-session {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 12px; overflow: hidden;
+  }
+  .history-session-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+  .history-session-header:hover { background: rgba(0,229,255,0.04); }
+  .history-session-info { flex: 1; }
+  .history-session-date { font-family:'Space Mono',monospace; font-size:11px; color:var(--accent); }
+  .history-session-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+  .history-session-body { padding: 10px 16px; display: none; }
+  .history-session-body.open { display: block; }
+  .history-item-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0; border-bottom: 1px solid rgba(26,48,80,0.5);
+    font-size: 12px;
+  }
+  .history-item-row:last-child { border-bottom: none; }
+  .history-item-thumb {
+    width: 36px; height: 36px; border-radius: 5px;
+    object-fit: cover; background: var(--card); flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+  .history-item-name { flex: 1; color: var(--muted); font-family:'Space Mono',monospace; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .history-item-title { flex: 2; color: var(--text); font-size:12px; }
+  .history-item-status { font-size: 11px; }
+  .history-dl-btn {
+    background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.3);
+    color: var(--accent); border-radius: 6px; padding: 4px 10px;
+    cursor: pointer; font-size: 11px; font-family:'Space Mono',monospace;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .history-dl-btn:hover { background: rgba(0,229,255,0.2); }
+  .history-dl-csv-btn {
+    background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3);
+    color: var(--green); border-radius: 6px; padding: 4px 10px;
+    cursor: pointer; font-size: 11px; font-family:'Space Mono',monospace;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .history-dl-csv-btn:hover { background: rgba(0,255,136,0.2); }
+
+  /* EXTENSION SELECTOR */
+  .ext-selector { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .ext-pill {
+    padding: 5px 12px; border-radius: 6px; font-size: 11px;
+    background: var(--bg2); border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer; transition: all 0.2s;
+    font-family: 'Space Mono', monospace; font-weight: 700;
+  }
+  .ext-pill.active { background: rgba(0,229,255,0.15); border-color: var(--accent); color: var(--accent); }
+  .ext-pill:hover:not(.active) { border-color: var(--muted); color: var(--text); }
+
+  /* PER-IMAGE PROGRESS */
+  .img-progress-bar {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+    background: var(--border); border-radius: 0 0 8px 8px; overflow: hidden;
+  }
+  .img-progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--green));
+    transition: width 0.3s; width: 0%;
+  }
+  .img-pct-badge {
+    position: absolute; top: 3px; left: 3px;
+    background: rgba(5,10,18,0.85); color: var(--accent);
+    font-size: 9px; padding: 1px 5px; border-radius: 3px;
+    font-family: 'Space Mono', monospace; font-weight: 700;
+    display: none;
+  }
+  .preview-item.processing .img-pct-badge { display: block; }
+  .preview-item.done-ok .img-pct-badge { color: var(--green); }
+  .preview-item.done-err .img-pct-badge { color: var(--red); }
+
+  /* FAILED RETRY BANNER */
+  .retry-banner {
+    background: rgba(255,45,85,0.08); border: 1px solid rgba(255,45,85,0.25);
+    border-radius: 10px; padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    display: none;
+  }
+  .retry-banner.show { display: flex; }
+  .retry-banner-text { font-size: 13px; color: var(--red); font-weight: 600; }
+  .retry-banner-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .btn-retry-failed {
+    background: rgba(255,45,85,0.15); border: 1px solid rgba(255,45,85,0.4);
+    color: var(--red); border-radius: 8px; padding: 8px 16px;
+    cursor: pointer; font-size: 13px; font-weight: 700;
+    font-family:'Rajdhani',sans-serif; transition: all 0.2s; white-space: nowrap;
+  }
+  .btn-retry-failed:hover { background: rgba(255,45,85,0.25); }
+
   /* Responsive */
   @media (max-width: 768px) {
     .sidebar { display: none; }
@@ -496,6 +592,7 @@
   </div>
   <div class="header-right">
     <div class="status-dot" title="AI Ready"></div>
+    <button class="btn-users" onclick="openHistoryModal()" style="background:rgba(0,229,255,0.1);color:var(--accent);border:1px solid rgba(0,229,255,0.3);">🕘 History</button>
     <button class="btn-users" onclick="openUsersModal()">👥 Users</button>
     <button class="btn-settings" onclick="openSettingsModal()">⚙ Settings</button>
     <button class="btn-api" onclick="openModal()">🔑 API Key</button>
@@ -566,8 +663,15 @@
     </div>
 
     <div class="sidebar-section">
-      <div class="sidebar-label">File Extension</div>
-      <input type="text" placeholder="Default (keep original)">
+      <div class="sidebar-label">File Extension (CSV)</div>
+      <div class="ext-selector" id="extSelector">
+        <div class="ext-pill active" data-ext="keep" onclick="selectExt(this)">AUTO</div>
+        <div class="ext-pill" data-ext="jpg" onclick="selectExt(this)">JPG</div>
+        <div class="ext-pill" data-ext="png" onclick="selectExt(this)">PNG</div>
+        <div class="ext-pill" data-ext="ai" onclick="selectExt(this)">AI</div>
+        <div class="ext-pill" data-ext="eps" onclick="selectExt(this)">EPS</div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px;font-family:'Space Mono',monospace;">CSV ফাইলে ছবির নামের extension পরিবর্তন হবে</div>
     </div>
 
     <button class="btn btn-generate" style="width:100%;justify-content:center;" onclick="saveSettings()">💾 Save Settings</button>
@@ -617,7 +721,16 @@
       <button class="btn btn-pause" id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
       <button class="btn btn-generate" id="generateBtn" onclick="startGeneration()">✦ Generate (<span id="fileCount">0</span>)</button>
       <button class="btn btn-export" onclick="exportCSV()">⬇ Export CSV</button>
-      <button class="btn btn-pause" onclick="showHistory()">🕘 History</button>
+      <button class="btn btn-pause" onclick="openHistoryModal()">🕘 History</button>
+    </div>
+
+    <!-- Retry Failed Banner -->
+    <div class="retry-banner" id="retryBanner">
+      <div>
+        <div class="retry-banner-text">⚠ <span id="failedCount">0</span>টি ছবির metadata তৈরি হয়নি</div>
+        <div class="retry-banner-sub">শুধু failed ছবিগুলো আবার generate করুন। সফল ছবিগুলো একসাথে CSV-তে থাকবে।</div>
+      </div>
+      <button class="btn-retry-failed" onclick="retryFailed()">🔄 Retry Failed</button>
     </div>
 
     <!-- Progress -->
@@ -650,6 +763,21 @@
           <p>Upload images and click Generate to create AI-powered metadata</p>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY MODAL -->
+<div class="modal-bg" id="historyModalBg">
+  <div class="modal" style="width:700px;max-width:96vw;">
+    <h2>🕘 Generation History</h2>
+    <p>আগের সব session-এর generated metadata। যেকোনো session থেকে আবার CSV বা ZIP ডাউনলোড করুন।</p>
+    <div id="historyList">
+      <div class="history-empty">⏳ কোনো history নেই। প্রথমে কিছু generate করুন।</div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-clear" style="flex:1;justify-content:center;" onclick="clearHistory()">🗑 Clear History</button>
+      <button class="btn btn-pause" style="flex:1;justify-content:center;" onclick="document.getElementById('historyModalBg').classList.remove('show')">Close</button>
     </div>
   </div>
 </div>
@@ -823,6 +951,163 @@ let currentPlatform = 'general';
 let apiKeys = JSON.parse(localStorage.getItem('robig_keys') || '{}');
 let parallelWorkers = 3;
 let outputFilename = localStorage.getItem('robig_outname') || 'robi-graphics';
+let selectedExt = 'keep'; // extension override
+
+// ===== HISTORY =====
+let sessionHistory = JSON.parse(localStorage.getItem('robig_history') || '[]');
+
+function saveToHistory(sessionResults) {
+  const session = {
+    id: Date.now(),
+    date: new Date().toLocaleString('bn-BD'),
+    platform: currentPlatform,
+    count: sessionResults.length,
+    failedCount: sessionResults.filter(r => r.metadata?.error).length,
+    items: sessionResults.map(r => ({
+      filename: r.file.name,
+      title: r.metadata?.title || '',
+      description: r.metadata?.description || '',
+      keywords: r.metadata?.keywords || [],
+      category: r.metadata?.category || '',
+      category_number: r.metadata?.category_number || '',
+      error: r.metadata?.error || null,
+      previewSrc: r.previewSrc || null,
+    }))
+  };
+  sessionHistory.unshift(session);
+  if (sessionHistory.length > 20) sessionHistory = sessionHistory.slice(0, 20); // max 20 sessions
+  try { localStorage.setItem('robig_history', JSON.stringify(sessionHistory)); } catch(e) {
+    // If storage full, keep last 5
+    sessionHistory = sessionHistory.slice(0, 5);
+    try { localStorage.setItem('robig_history', JSON.stringify(sessionHistory)); } catch(e2) {}
+  }
+}
+
+function openHistoryModal() {
+  renderHistoryList();
+  document.getElementById('historyModalBg').classList.add('show');
+}
+
+function clearHistory() {
+  if (!confirm('সব history মুছে ফেলবেন?')) return;
+  sessionHistory = [];
+  localStorage.removeItem('robig_history');
+  renderHistoryList();
+  showToast('🗑 History cleared!');
+}
+
+function renderHistoryList() {
+  const container = document.getElementById('historyList');
+  if (sessionHistory.length === 0) {
+    container.innerHTML = '<div class="history-empty">⏳ কোনো history নেই। প্রথমে কিছু generate করুন।</div>';
+    return;
+  }
+  container.innerHTML = sessionHistory.map((s, si) => `
+    <div class="history-session">
+      <div class="history-session-header" onclick="toggleHistorySession(${si})">
+        <div class="history-session-info">
+          <div class="history-session-date">📅 ${s.date} · ${s.platform?.toUpperCase() || 'GENERAL'}</div>
+          <div class="history-session-meta">${s.count} ফাইল · ${s.failedCount > 0 ? `⚠ ${s.failedCount} failed` : '✅ সব সফল'}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="history-dl-csv-btn" onclick="event.stopPropagation();downloadHistoryCSV(${si})">📊 CSV</button>
+          <button class="history-dl-btn" onclick="event.stopPropagation();downloadHistoryZip(${si})">📦 ZIP</button>
+          <span style="color:var(--muted);font-size:12px;">▾</span>
+        </div>
+      </div>
+      <div class="history-session-body" id="hbody-${si}">
+        ${s.items.map(item => `
+          <div class="history-item-row">
+            ${item.previewSrc ? `<img class="history-item-thumb" src="${item.previewSrc}" alt="">` : `<div class="history-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:16px;">📄</div>`}
+            <div class="history-item-name">${item.filename}</div>
+            <div class="history-item-title">${item.error ? `<span style="color:var(--red);">⚠ Error</span>` : item.title || '—'}</div>
+            <div class="history-item-status">${item.error ? '❌' : '✅'}</div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function toggleHistorySession(si) {
+  const body = document.getElementById('hbody-' + si);
+  if (body) body.classList.toggle('open');
+}
+
+function buildCSVFromHistory(session) {
+  const platform = session.platform || 'general';
+  const catOn = true;
+  let headers, rows;
+  if (platform === 'adobe') {
+    headers = ['Filename','Title','Keywords','Category','Editorial'];
+    rows = session.items.map(r => [csvQ(r.filename), csvQ(r.title), csvQ((r.keywords||[]).join(', ')), csvQ(String(r.category_number||'')), csvQ('No')]);
+  } else if (platform === 'shutterstock') {
+    headers = ['filename','description','keywords','categories','editorial','mature_content','illustration'];
+    rows = session.items.map(r => [csvQ(r.filename), csvQ(r.description), csvQ((r.keywords||[]).join(',')), csvQ(r.category||''), csvQ('no'), csvQ('no'), csvQ('no')]);
+  } else {
+    headers = ['Filename','Title','Description','Keywords','Category','Category Number'];
+    rows = session.items.map(r => [csvQ(r.filename), csvQ(r.title), csvQ(r.description), csvQ((r.keywords||[]).join(', ')), csvQ(r.category||''), csvQ(String(r.category_number||''))]);
+  }
+  return [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+}
+
+function downloadHistoryCSV(si) {
+  const session = sessionHistory[si];
+  if (!session) return;
+  const csv = buildCSVFromHistory(session);
+  const fname = 'history-' + session.id + '.csv';
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = fname;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📊 History CSV downloaded!');
+}
+
+async function downloadHistoryZip(si) {
+  const session = sessionHistory[si];
+  if (!session) return;
+  if (!window.JSZip) {
+    showToast('⏳ Loading ZIP engine…');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+  }
+  const zip = new JSZip();
+  const csv = buildCSVFromHistory(session);
+  zip.file('metadata.csv', '\uFEFF' + csv);
+  const imgFolder = zip.folder('images');
+  session.items.forEach(item => {
+    if (item.previewSrc && item.previewSrc.startsWith('data:')) {
+      const parts = item.previewSrc.split(',');
+      if (parts.length === 2) {
+        const mime = parts[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+        const ext2 = mime.split('/')[1] || 'jpg';
+        const byteString = atob(parts[1]);
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+        imgFolder.file(item.filename || ('img.' + ext2), ab);
+      }
+    }
+  });
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'history-' + session.id + '.zip';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📦 History ZIP downloaded!');
+}
+
+// ===== EXTENSION SELECTOR =====
+function selectExt(el) {
+  document.querySelectorAll('.ext-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  selectedExt = el.dataset.ext;
+}
+
+function applyExtension(filename) {
+  if (!selectedExt || selectedExt === 'keep') return filename;
+  const dotIdx = filename.lastIndexOf('.');
+  const base = dotIdx >= 0 ? filename.substring(0, dotIdx) : filename;
+  return base + '.' + selectedExt;
+}
 
 // ===== USAGE STATS =====
 let stats = JSON.parse(localStorage.getItem('robig_stats') || 'null') || {
@@ -1147,13 +1432,15 @@ function renderPreviews() {
     const ext = f.name.split('.').pop().toUpperCase();
     const isVec = isVectorFile(f);
     const hasPreview = isVec && filePreviewMap[getFileKey(f)];
-    return `<div class="preview-item" title="${f.name}" onclick="isVectorFile(files[${i}]) ? openVectorModal(${i}) : null">
+    return `<div class="preview-item" id="prev-${i}" title="${f.name}" onclick="isVectorFile(files[${i}]) ? openVectorModal(${i}) : null">
       ${src
         ? `<img src="${src}" alt="${f.name}" style="width:100%;height:100%;object-fit:cover;">`
         : isVec
           ? `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;font-size:10px;color:var(--muted);padding:4px;"><span style="font-size:20px;">📐</span><span style="font-family:'Space Mono',monospace;color:var(--accent);font-size:9px;">${ext}</span><span style="font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center;">${f.name}</span></div>`
           : `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:24px;">📄</div>`}
       ${isVec && hasPreview ? `<div class="processing-badge">${ext}</div>` : ''}
+      <span class="img-pct-badge" id="pct-${i}">0%</span>
+      <div class="img-progress-bar"><div class="img-progress-fill" id="pfill-${i}"></div></div>
       <button class="rm" onclick="removeFile(${i},event)">✕</button>
     </div>`;
   }).join('');
@@ -1250,6 +1537,13 @@ async function startGeneration() {
       document.getElementById('processingItemName').textContent = f.name;
       const pct = Math.round((completed / total) * 100);
       updateProgress(pct, `Processing ${completed+1}–${Math.min(completed+workers, total)} of ${total}…`);
+      // Per-image: mark as processing
+      const prevEl = document.getElementById('prev-' + i);
+      const pctBadge = document.getElementById('pct-' + i);
+      const pFill = document.getElementById('pfill-' + i);
+      if (prevEl) prevEl.classList.add('processing');
+      if (pctBadge) pctBadge.textContent = '⏳';
+      if (pFill) pFill.style.width = '20%';
       try {
         let base64, mimeType;
         const key = getFileKey(f);
@@ -1277,6 +1571,10 @@ async function startGeneration() {
           : (f.type.startsWith('image/') ? `data:${f.type};base64,${base64}` : null);
         results.push({ file: f, base64, mimeType, previewSrc, metadata });
         renderResult(results[results.length - 1], results.length - 1);
+        // Per-image: done ok
+        if (prevEl) { prevEl.classList.remove('processing'); prevEl.classList.add('done-ok'); }
+        if (pctBadge) pctBadge.textContent = '✅';
+        if (pFill) pFill.style.width = '100%';
         // Update stats
         stats.filesProcessed++;
         localStorage.setItem('robig_stats', JSON.stringify(stats));
@@ -1284,6 +1582,10 @@ async function startGeneration() {
         results.push({ file: f, base64: null, mimeType: null, previewSrc: null,
           metadata: { error: err.message, title:'Error', description: err.message, keywords:[] } });
         renderResult(results[results.length - 1], results.length - 1);
+        // Per-image: done error
+        if (prevEl) { prevEl.classList.remove('processing'); prevEl.classList.add('done-err'); }
+        if (pctBadge) pctBadge.textContent = '❌';
+        if (pFill) pFill.style.width = '100%';
       }
       completed++;
       document.getElementById('resultCount').textContent = results.length;
@@ -1303,6 +1605,31 @@ async function startGeneration() {
   generating = false;
   document.getElementById('generateBtn').disabled = false;
 
+  // Show retry banner if there are failures
+  const failed = results.filter(r => r.metadata?.error);
+  const retryBanner = document.getElementById('retryBanner');
+  if (failed.length > 0) {
+    document.getElementById('failedCount').textContent = failed.length;
+    retryBanner.classList.add('show');
+    // Keep only failed files in the dropzone
+    const failedFileNames = new Set(failed.map(r => r.file.name + r.file.size));
+    files = files.filter(f => failedFileNames.has(f.name + f.size));
+    renderPreviews();
+    document.getElementById('fileCount').textContent = files.length;
+    showToast(`⚠ ${failed.length}টি ছবি failed — dropzone-এ রয়েছে। বাকিগুলো সরানো হয়েছে।`);
+  } else {
+    retryBanner.classList.remove('show');
+    // All succeeded — clear dropzone
+    files = [];
+    filePreviewMap = {};
+    fileMetaMap = {};
+    renderPreviews();
+    document.getElementById('fileCount').textContent = '0';
+  }
+
+  // Save to history
+  saveToHistory(results);
+
   const csvOn = document.getElementById('csvToggle').classList.contains('on');
   if (csvOn) exportCSV();
 
@@ -1310,36 +1637,62 @@ async function startGeneration() {
 }
 
 function buildPrompt(titleLen, descLen, kwCount, platform) {
-  const platformHints = {
-    adobe: 'Adobe Stock requires a concise, descriptive title under 70 chars. Description should be detailed. Keywords are comma-separated.',
-    shutterstock: 'Shutterstock prefers clear, searchable titles. Use editorial style descriptions.',
-    freepik: 'Freepik prefers creative, design-focused metadata with style keywords.',
-    getty: 'Getty Images requires professional, editorial-quality metadata. Be precise.',
-    istock: 'iStock uses Getty standards. Focus on commercial use cases.',
-    dreamstime: 'Dreamstime accepts broad keyword sets. Be comprehensive.',
-    vecteezy: 'Vecteezy focuses on vector/illustration metadata.',
-    general: 'General stock photo metadata optimized for SEO.'
+  const platformCategory = {
+    adobe:       'Adobe Stock Category (use official Adobe Stock category name, category_number 1–28)',
+    shutterstock:'Shutterstock Category (use official Shutterstock category name)',
+    freepik:     'Freepik Category',
+    getty:       'Getty Images Category',
+    istock:      'iStock Category',
+    dreamstime:  'Dreamstime Category',
+    vecteezy:    'Vecteezy Category',
+    general:     'Adobe Stock Category + Shutterstock Category (pick best match)'
   };
-  return `You are an expert stock photo metadata specialist optimizing for SEO and discoverability on ${platform} platform.
+  const platformFocus = {
+    adobe:       'Optimize strictly for Adobe Stock. Title 60-120 chars, high buyer intent, main keyword first.',
+    shutterstock:'Optimize strictly for Shutterstock. Clear searchable editorial-style title.',
+    freepik:     'Optimize for Freepik. Creative, design-focused, style keywords prominent.',
+    getty:       'Optimize for Getty Images. Professional, editorial-quality, precise language.',
+    istock:      'Optimize for iStock (Getty standards). Commercial use focus.',
+    dreamstime:  'Optimize for Dreamstime. Comprehensive, broad keyword sets.',
+    vecteezy:    'Optimize for Vecteezy. Vector and illustration focused metadata.',
+    general:     'Optimize for ALL major stock platforms (Adobe Stock, Shutterstock, Getty, Freepik).'
+  };
+  return `You are a professional stock image SEO expert specializing in Adobe Stock and Shutterstock.
 
-Analyze this image and generate metadata following ${platformHints[platform] || platformHints.general}
+Analyze this image carefully: identify the design topic, style (minimalist/3D/flat/realistic/line art), main object, and background type.
 
-Return ONLY a valid JSON object with these exact keys:
+Platform: ${platform.toUpperCase()}
+${platformFocus[platform] || platformFocus.general}
+
+TITLE RULES (max ${titleLen} chars):
+- Start immediately with the MOST IMPORTANT main keyword
+- 60-120 characters ideally
+- High buyer intent language
+- SEO-friendly natural English
+- Include style + subject + use-case hint
+
+DESCRIPTION RULES (max ${descLen} chars):
+- 2-3 lines of natural English
+- Mention real-world use cases: UI design, social media, web, print, marketing, logo, branding
+- Commercial-use focused, no keyword stuffing
+
+KEYWORD RULES (exactly ${kwCount} keywords):
+- Keywords 1-10: HIGH SEARCH VOLUME (broadest, most important first)
+- Keywords 11-20: RELATED / NICHE keywords
+- Keywords 21-${kwCount}: SUPPORTING / LONG-TAIL keywords
+- No duplicates, single words or short 2-3 word phrases
+- Focus: logo, UI, marketing, template, branding, commercial use
+
+CATEGORY: ${platformCategory[platform] || platformCategory.general}
+
+Return ONLY this exact valid JSON — no markdown, no explanation, nothing else:
 {
-  "title": "SEO-optimized title, max ${titleLen} characters",
-  "description": "Detailed description for search engines, max ${descLen} characters",
-  "keywords": ["keyword1", "keyword2", ...],
-  "category": "suggested category name",
-  "category_number": suggested_category_number_1_to_28
-}
-
-Rules:
-- Title must be descriptive, include main subject and style
-- Description must expand on title, add context, use natural language
-- Keywords must be single words or short phrases, ordered by relevance, exactly ${kwCount} keywords
-- category should be the best matching Adobe Stock category name
-- category_number should be 1–28 matching the Adobe category list
-- No markdown, no explanation, only the JSON object`;
+  "title": "SEO title here",
+  "description": "Natural English description here",
+  "keywords": ["keyword1", "keyword2", "keyword3"],
+  "category": "Category Name",
+  "category_number": 1
+}`;
 }
 
 // ===== UNIVERSAL AI API CALL =====
@@ -1551,7 +1904,7 @@ function buildCSV() {
       // Use AI-suggested category_number or fall back to settings value
       const catNum = r.metadata.category_number || adobeCatNum;
       return [
-        csvQ(r.file.name),
+        csvQ(applyExtension(r.file.name)),
         csvQ(r.metadata.title||''),
         csvQ((r.metadata.keywords||[]).join(', ')),
         csvQ(catOn ? String(catNum) : ''),
@@ -1561,7 +1914,7 @@ function buildCSV() {
   } else if (platform === 'shutterstock') {
     headers = ['filename','description','keywords','categories','editorial','mature_content','illustration'];
     rows = results.map(r => [
-      csvQ(r.file.name),
+      csvQ(applyExtension(r.file.name)),
       csvQ(r.metadata.description||''),
       csvQ((r.metadata.keywords||[]).join(',')),
       csvQ(catOn ? (ssCat || r.metadata.category || '') : ''),
@@ -1570,7 +1923,7 @@ function buildCSV() {
   } else if (platform === 'freepik') {
     headers = ['Filename','Title','Description','Keywords','Category'];
     rows = results.map(r => [
-      csvQ(r.file.name),
+      csvQ(applyExtension(r.file.name)),
       csvQ(r.metadata.title||''),
       csvQ(r.metadata.description||''),
       csvQ((r.metadata.keywords||[]).join(', ')),
@@ -1579,7 +1932,7 @@ function buildCSV() {
   } else if (platform === 'getty' || platform === 'istock') {
     headers = ['Filename','Title','Description','Keywords','Category Number'];
     rows = results.map(r => [
-      csvQ(r.file.name),
+      csvQ(applyExtension(r.file.name)),
       csvQ(r.metadata.title||''),
       csvQ(r.metadata.description||''),
       csvQ((r.metadata.keywords||[]).join(', ')),
@@ -1592,7 +1945,7 @@ function buildCSV() {
       : ['Filename','Title','Description','Keywords'];
     rows = results.map(r => {
       const base = [
-        csvQ(r.file.name),
+        csvQ(applyExtension(r.file.name)),
         csvQ(r.metadata.title||''),
         csvQ(r.metadata.description||''),
         csvQ((r.metadata.keywords||[]).join(', '))
@@ -1727,7 +2080,68 @@ async function testKey() {
 }
 
 // ===== MISC =====
-function showHistory() { showToast('🕘 History stored in CSV exports'); }
+async function retryFailed() {
+  const failed = results.filter(r => r.metadata?.error);
+  if (failed.length === 0) { showToast('✅ কোনো failed item নেই!'); return; }
+  const provider = document.getElementById('aiProvider').value;
+  const apiKey = apiKeys[provider];
+  if (!apiKey) { openModal(); showToast('⚠️ API key দিন'); return; }
+
+  showToast(`🔄 ${failed.length}টি failed item retry করছি…`);
+  const titleLen = document.querySelector('input[oninput*="titleVal"]').value;
+  const descLen  = document.querySelector('input[oninput*="descVal"]').value;
+  const kwCount  = document.querySelector('input[oninput*="kwVal"]').value;
+  const prompt = buildPrompt(titleLen, descLen, kwCount, currentPlatform);
+
+  let retried = 0;
+  for (const item of failed) {
+    const idx = results.indexOf(item);
+    try {
+      let base64 = item.base64, mimeType = item.mimeType;
+      if (!base64 && item.file) {
+        if (isVectorFile(item.file) && filePreviewMap[getFileKey(item.file)]) {
+          base64 = filePreviewMap[getFileKey(item.file)].split(',')[1];
+          mimeType = 'image/jpeg';
+        } else {
+          base64 = await fileToBase64(item.file);
+          mimeType = item.file.type;
+        }
+      }
+      const metadata = await callAI(provider, apiKey, base64, mimeType, prompt);
+      results[idx].metadata = metadata;
+      results[idx].base64 = base64;
+      results[idx].mimeType = mimeType;
+      document.getElementById(`result-${idx}`)?.remove();
+      renderResult(results[idx], idx);
+      retried++;
+    } catch(e) {
+      results[idx].metadata = { error: e.message, title:'Error', description: e.message, keywords:[] };
+    }
+    await sleep(300);
+  }
+
+  const stillFailed = results.filter(r => r.metadata?.error);
+  if (stillFailed.length === 0) {
+    document.getElementById('retryBanner').classList.remove('show');
+    // All retried successfully — clear dropzone
+    files = [];
+    filePreviewMap = {};
+    fileMetaMap = {};
+    renderPreviews();
+    document.getElementById('fileCount').textContent = '0';
+    showToast(`✅ সব ${retried}টি সফলভাবে retry হয়েছে!`);
+  } else {
+    document.getElementById('failedCount').textContent = stillFailed.length;
+    // Keep only still-failed files in dropzone
+    const stillFailedNames = new Set(stillFailed.map(r => r.file.name + r.file.size));
+    files = files.filter(f => stillFailedNames.has(f.name + f.size));
+    renderPreviews();
+    document.getElementById('fileCount').textContent = files.length;
+    showToast(`⚠ ${retried}টি সফল, ${stillFailed.length}টি এখনো failed`);
+  }
+  // Update history
+  saveToHistory(results);
+}
 function saveSettings() { showToast('💾 Settings saved!'); }
 
 function fileToBase64(file) {
@@ -1748,7 +2162,7 @@ function showToast(msg) {
 }
 
 // Close modals on bg click
-['modalBg','settingsModalBg','usersModalBg','vectorModalBg'].forEach(id => {
+['modalBg','settingsModalBg','usersModalBg','vectorModalBg','historyModalBg'].forEach(id => {
   document.getElementById(id).addEventListener('click', function(e) {
     if (e.target === this) this.classList.remove('show');
   });
