@@ -581,6 +581,25 @@
     --accent: #fbbf24; --accent2: #60a5fa; --accent3: #f472b6;
     --glow: 0 0 20px rgba(251,191,36,0.3);
   }
+  /* WHITE THEME */
+  body.theme-white {
+    --bg: #f0f4f8; --bg2: #e2e8f0; --panel: #dde3ec;
+    --card: #eaf0f8; --border: #b0bccf;
+    --accent: #2563eb; --accent2: #dc2626; --accent3: #7c3aed;
+    --green: #16a34a; --red: #dc2626; --text: #1e293b;
+    --muted: #64748b; --glow: 0 0 20px rgba(37,99,235,0.25);
+  }
+  body.theme-white header { background: rgba(240,244,248,0.97); }
+  body.theme-white body::before { display: none; }
+  /* BLACK THEME */
+  body.theme-black {
+    --bg: #000000; --bg2: #0a0a0a; --panel: #111111;
+    --card: #181818; --border: #2a2a2a;
+    --accent: #e2e8f0; --accent2: #f59e0b; --accent3: #a78bfa;
+    --green: #4ade80; --red: #f87171; --text: #e2e8f0;
+    --muted: #6b7280; --glow: 0 0 20px rgba(226,232,240,0.15);
+  }
+  body.theme-black header { background: rgba(0,0,0,0.98); }
 </style>
 </head>
 <body>
@@ -730,7 +749,7 @@
         <div class="retry-banner-text">⚠ <span id="failedCount">0</span>টি ছবির metadata তৈরি হয়নি</div>
         <div class="retry-banner-sub">শুধু failed ছবিগুলো আবার generate করুন। সফল ছবিগুলো একসাথে CSV-তে থাকবে।</div>
       </div>
-      <button class="btn-retry-failed" onclick="retryFailed()">🔄 Retry Failed</button>
+      <button class="btn-retry-failed" onclick="autoRetryUntilDone()">🔄 Retry Failed (Auto)</button>
     </div>
 
     <!-- Progress -->
@@ -755,7 +774,10 @@
           <div class="results-title">GENERATED METADATA</div>
           <div class="results-count" id="resultCount">0</div>
         </div>
-        <button class="btn btn-dl-zip" id="dlZipBtn" onclick="downloadZip()" style="display:none;">📦 Download ZIP</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-export" id="dlCsvBtn" onclick="exportCSV()" style="display:none;font-size:13px;padding:10px 16px;">📊 Download CSV</button>
+          <button class="btn btn-dl-zip" id="dlZipBtn" onclick="downloadZip()" style="display:none;">📦 Download ZIP</button>
+        </div>
       </div>
       <div class="result-list" id="resultList">
         <div class="empty" id="emptyState">
@@ -832,6 +854,12 @@
       </div>
       <div class="theme-card" onclick="setTheme('gold',this)">
         <div class="tc-icon">🟡</div>Gold
+      </div>
+      <div class="theme-card" onclick="setTheme('white',this)">
+        <div class="tc-icon">⬜</div>White
+      </div>
+      <div class="theme-card" onclick="setTheme('black',this)">
+        <div class="tc-icon">⬛</div>Black
       </div>
     </div>
 
@@ -1162,7 +1190,7 @@ function setTheme(name, el) {
   if (t && t !== 'default') {
     document.body.className = 'theme-' + t;
     const cards = document.querySelectorAll('.theme-card');
-    const themes = ['default','purple','green','orange','red','gold'];
+    const themes = ['default','purple','green','orange','red','gold','white','black'];
     const idx = themes.indexOf(t);
     if (idx >= 0) { cards.forEach(c => c.classList.remove('active')); cards[idx]?.classList.add('active'); }
   }
@@ -1463,6 +1491,7 @@ function clearAll() {
   document.getElementById('resultList').innerHTML = `<div class="empty" id="emptyState"><div class="ei">🔮</div><p>Upload images and click Generate to create AI-powered metadata</p></div>`;
   document.getElementById('resultCount').textContent = '0';
   document.getElementById('dlZipBtn').style.display = 'none';
+  document.getElementById('dlCsvBtn').style.display = 'none';
   document.getElementById('progressWrap').classList.remove('show');
   document.getElementById('processingItemBar').classList.remove('show');
   showToast('🗑 Cleared all files and results');
@@ -1551,8 +1580,9 @@ async function startGeneration() {
           base64 = filePreviewMap[key].split(',')[1];
           mimeType = 'image/jpeg';
         } else if (f.type.startsWith('image/')) {
-          base64 = await fileToBase64(f);
-          mimeType = f.type;
+          // Compress image before sending — fixes Gemini "Unable to process" + reduces memory
+          base64 = await compressImageFile(f, 1200, 0.82);
+          mimeType = 'image/jpeg';
         } else {
           try {
             const prev = await renderVectorPreview(f);
@@ -1560,16 +1590,24 @@ async function startGeneration() {
             base64 = prev.split(',')[1];
             mimeType = 'image/jpeg';
           } catch {
-            base64 = await fileToBase64(f);
-            mimeType = f.type || 'application/octet-stream';
+            // EPS/AI file couldn't be rendered — send as raw and let AI handle it
+            try {
+              base64 = await fileToBase64(f);
+              mimeType = f.type || 'application/octet-stream';
+            } catch(e2) {
+              throw new Error(`EPS/Vector preview ব্যর্থ হয়েছে: ${e2.message}`);
+            }
           }
         }
         const prompt = buildPrompt(titleLen, descLen, kwCount, currentPlatform);
         const metadata = await callAI(provider, apiKey, base64, mimeType, prompt);
         const previewSrc = (mimeType === 'image/jpeg' && isVectorFile(f))
           ? filePreviewMap[key]
-          : (f.type.startsWith('image/') ? `data:${f.type};base64,${base64}` : null);
+          : `data:image/jpeg;base64,${base64}`;
+        // Store only a small thumbnail for display, free the full base64 to save memory
         results.push({ file: f, base64, mimeType, previewSrc, metadata });
+        // Clear full base64 from memory after render — keeps browser fast on large batches
+        // We keep it only if needed for retry; previewSrc is a compressed copy already
         renderResult(results[results.length - 1], results.length - 1);
         // Per-image: done ok
         if (prevEl) { prevEl.classList.remove('processing'); prevEl.classList.add('done-ok'); }
@@ -1589,7 +1627,10 @@ async function startGeneration() {
       }
       completed++;
       document.getElementById('resultCount').textContent = results.length;
-      if (results.length > 0) document.getElementById('dlZipBtn').style.display = 'flex';
+      if (results.length > 0) {
+        document.getElementById('dlZipBtn').style.display = 'flex';
+        document.getElementById('dlCsvBtn').style.display = 'flex';
+      }
       updateProgress(Math.round((completed / total) * 100), `Processing ${completed} of ${total}…`);
       await sleep(100);
     }
@@ -1605,9 +1646,12 @@ async function startGeneration() {
   generating = false;
   document.getElementById('generateBtn').disabled = false;
 
-  // Show retry banner if there are failures
+  // Save to history
+  saveToHistory(results);
+
   const failed = results.filter(r => r.metadata?.error);
   const retryBanner = document.getElementById('retryBanner');
+
   if (failed.length > 0) {
     document.getElementById('failedCount').textContent = failed.length;
     retryBanner.classList.add('show');
@@ -1616,24 +1660,97 @@ async function startGeneration() {
     files = files.filter(f => failedFileNames.has(f.name + f.size));
     renderPreviews();
     document.getElementById('fileCount').textContent = files.length;
-    showToast(`⚠ ${failed.length}টি ছবি failed — dropzone-এ রয়েছে। বাকিগুলো সরানো হয়েছে।`);
+    showToast(`⚠ ${failed.length}টি failed — auto retry শুরু হচ্ছে 3 সেকেন্ডে…`);
+    // Auto retry failed items — when all succeed, CSV will auto-download
+    setTimeout(() => autoRetryUntilDone(), 3000);
   } else {
     retryBanner.classList.remove('show');
-    // All succeeded — clear dropzone
+    // All succeeded — clear dropzone and download CSV
     files = [];
     filePreviewMap = {};
     fileMetaMap = {};
     renderPreviews();
     document.getElementById('fileCount').textContent = '0';
+    showToast(`✦ সব ${results.length}টি সফল! CSV ডাউনলোড হচ্ছে…`);
+    setTimeout(() => { exportCSV(); }, 600);
+  }
+}
+
+// ===== AUTO RETRY UNTIL ALL SUCCEED THEN CSV =====
+async function autoRetryUntilDone() {
+  const MAX_ROUNDS = 5; // maximum retry attempts
+  let round = 0;
+
+  while (round < MAX_ROUNDS) {
+    const stillFailed = results.filter(r => r.metadata?.error);
+    if (stillFailed.length === 0) break;
+
+    round++;
+    const provider = document.getElementById('aiProvider').value;
+    const apiKey = apiKeys[provider];
+    if (!apiKey) break;
+
+    showToast(`🔄 Auto retry ${round}/${MAX_ROUNDS} — ${stillFailed.length}টি ফাইল…`);
+    document.getElementById('failedCount').textContent = stillFailed.length;
+
+    const titleLen = document.querySelector('input[oninput*="titleVal"]').value;
+    const descLen  = document.querySelector('input[oninput*="descVal"]').value;
+    const kwCount  = document.querySelector('input[oninput*="kwVal"]').value;
+    const prompt = buildPrompt(titleLen, descLen, kwCount, currentPlatform);
+
+    for (const item of stillFailed) {
+      const idx = results.indexOf(item);
+      try {
+        let base64 = null, mimeType = null;
+        const key = getFileKey(item.file);
+        if (isVectorFile(item.file) && filePreviewMap[key]) {
+          base64 = filePreviewMap[key].split(',')[1];
+          mimeType = 'image/jpeg';
+        } else if (item.file.type.startsWith('image/')) {
+          base64 = await compressImageFile(item.file, 1200, 0.82);
+          mimeType = 'image/jpeg';
+        } else {
+          base64 = await fileToBase64(item.file);
+          mimeType = item.file.type;
+        }
+        const metadata = await callAI(provider, apiKey, base64, mimeType, prompt);
+        const previewSrc = `data:image/jpeg;base64,${base64}`;
+        results[idx].metadata = metadata;
+        results[idx].base64 = base64;
+        results[idx].mimeType = mimeType;
+        results[idx].previewSrc = previewSrc;
+        document.getElementById(`result-${idx}`)?.remove();
+        renderResult(results[idx], idx);
+      } catch(e) {
+        results[idx].metadata = { error: e.message, title: 'Error', description: e.message, keywords: [] };
+      }
+      await sleep(400);
+    }
+
+    const remaining = results.filter(r => r.metadata?.error);
+    document.getElementById('failedCount').textContent = remaining.length;
+    if (remaining.length === 0) break;
+    // Wait before next round
+    await sleep(2000);
   }
 
-  // Save to history
+  const finalFailed = results.filter(r => r.metadata?.error);
   saveToHistory(results);
 
-  const csvOn = document.getElementById('csvToggle').classList.contains('on');
-  if (csvOn) exportCSV();
-
-  showToast(`✦ Metadata generated for ${results.length} file(s)!`);
+  if (finalFailed.length === 0) {
+    // All done — hide retry banner, clear dropzone, download CSV
+    document.getElementById('retryBanner').classList.remove('show');
+    files = [];
+    filePreviewMap = {};
+    fileMetaMap = {};
+    renderPreviews();
+    document.getElementById('fileCount').textContent = '0';
+    showToast(`✅ সব সফল! CSV ডাউনলোড হচ্ছে…`);
+    setTimeout(() => { exportCSV(); }, 600);
+  } else {
+    document.getElementById('failedCount').textContent = finalFailed.length;
+    showToast(`⚠ ${finalFailed.length}টি এখনো failed — manual retry করুন`);
+  }
 }
 
 function buildPrompt(titleLen, descLen, kwCount, platform) {
@@ -1806,7 +1923,16 @@ function renderResult(item, idx) {
   if (empty) empty.remove();
 
   const md = item.metadata;
-  const imgSrc = item.previewSrc || (item.base64 && item.mimeType ? `data:${item.mimeType};base64,${item.base64}` : '');
+  // Only use base64 as thumbnail if it's a real image type (not EPS/AI/PDF raw bytes)
+  const isRawVector = item.mimeType && (
+    item.mimeType === 'application/postscript' ||
+    item.mimeType === 'application/illustrator' ||
+    item.mimeType === 'application/pdf' ||
+    item.mimeType === 'application/octet-stream'
+  );
+  const imgSrc = item.previewSrc
+    ? item.previewSrc
+    : (item.base64 && item.mimeType && !isRawVector ? `data:${item.mimeType};base64,${item.base64}` : '');
   const kws = Array.isArray(md.keywords) ? md.keywords : [];
   const catName = md.category || '';
   const catNum  = md.category_number || '';
@@ -1816,8 +1942,8 @@ function renderResult(item, idx) {
   card.id = `result-${idx}`;
   card.innerHTML = `
     ${imgSrc
-      ? `<img class="result-thumb" src="${imgSrc}" alt="thumb">`
-      : `<div class="result-thumb" style="display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:24px;gap:4px;"><span>📄</span><span style="font-size:10px;color:var(--muted);">${item.file.name.split('.').pop().toUpperCase()}</span></div>`}
+      ? `<img class="result-thumb" src="${imgSrc}" alt="thumb" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="result-thumb" style="display:none;flex-direction:column;align-items:center;justify-content:center;font-size:20px;gap:3px;"><span>📐</span><span style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;">${item.file.name.split('.').pop().toUpperCase()}</span></div>`
+      : `<div class="result-thumb" style="display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;gap:3px;"><span>📐</span><span style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;">${item.file.name.split('.').pop().toUpperCase()}</span></div>`}
     <div class="result-body">
       <div class="result-filename">${item.file.name}</div>
       ${md.error ? `<div style="color:var(--red);font-size:13px;">⚠ ${md.error}</div>` : `
@@ -1850,8 +1976,7 @@ function renderResult(item, idx) {
       <button class="btn-icon" onclick="deleteResult(${idx})" title="Delete" style="color:var(--red);">🗑</button>
     </div>`;
   list.appendChild(card);
-  const scrollOn = document.getElementById('scrollToggle')?.classList.contains('on') !== false;
-  if (scrollOn) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  // Auto scroll disabled — page stays in place while generating
 }
 
 async function regenResult(idx) {
@@ -1880,6 +2005,7 @@ function deleteResult(idx) {
   if (results.length === 0) {
     document.getElementById('resultList').innerHTML = `<div class="empty" id="emptyState"><div class="ei">🔮</div><p>Upload images and click Generate to create AI-powered metadata</p></div>`;
     document.getElementById('dlZipBtn').style.display = 'none';
+    document.getElementById('dlCsvBtn').style.display = 'none';
   }
 }
 
@@ -2103,8 +2229,13 @@ async function retryFailed() {
           base64 = filePreviewMap[getFileKey(item.file)].split(',')[1];
           mimeType = 'image/jpeg';
         } else {
-          base64 = await fileToBase64(item.file);
-          mimeType = item.file.type;
+          if (item.file.type.startsWith('image/')) {
+            base64 = await compressImageFile(item.file, 1200, 0.82);
+            mimeType = 'image/jpeg';
+          } else {
+            base64 = await fileToBase64(item.file);
+            mimeType = item.file.type;
+          }
         }
       }
       const metadata = await callAI(provider, apiKey, base64, mimeType, prompt);
@@ -2121,26 +2252,26 @@ async function retryFailed() {
   }
 
   const stillFailed = results.filter(r => r.metadata?.error);
+  saveToHistory(results);
+
   if (stillFailed.length === 0) {
     document.getElementById('retryBanner').classList.remove('show');
-    // All retried successfully — clear dropzone
     files = [];
     filePreviewMap = {};
     fileMetaMap = {};
     renderPreviews();
     document.getElementById('fileCount').textContent = '0';
-    showToast(`✅ সব ${retried}টি সফলভাবে retry হয়েছে!`);
+    showToast(`✅ সব ${retried}টি সফল! CSV ডাউনলোড হচ্ছে…`);
+    setTimeout(() => { exportCSV(); }, 600);
   } else {
     document.getElementById('failedCount').textContent = stillFailed.length;
-    // Keep only still-failed files in dropzone
     const stillFailedNames = new Set(stillFailed.map(r => r.file.name + r.file.size));
     files = files.filter(f => stillFailedNames.has(f.name + f.size));
     renderPreviews();
     document.getElementById('fileCount').textContent = files.length;
-    showToast(`⚠ ${retried}টি সফল, ${stillFailed.length}টি এখনো failed`);
+    showToast(`⚠ ${retried}টি সফল, ${stillFailed.length}টি এখনো failed — auto retry হচ্ছে…`);
+    setTimeout(() => autoRetryUntilDone(), 3000);
   }
-  // Update history
-  saveToHistory(results);
 }
 function saveSettings() { showToast('💾 Settings saved!'); }
 
@@ -2152,6 +2283,38 @@ function fileToBase64(file) {
     r.readAsDataURL(file);
   });
 }
+
+// Compress & resize image before sending to AI — fixes Gemini "Unable to process input image" error
+// Also reduces browser memory usage, preventing lag on large batches
+function compressImageFile(file, maxDim = 1200, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => {
+        // fallback: just return raw base64 if image can't be drawn
+        fileToBase64(file).then(resolve).catch(reject);
+      };
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w >= h) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else        { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl.split(',')[1]);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function showToast(msg) {
