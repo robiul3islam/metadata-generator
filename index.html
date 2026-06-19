@@ -1552,7 +1552,7 @@ async function tryAdminLogin() {
   if (entered === correct) {
     document.getElementById('adminLoginPrompt').style.display = 'none';
     document.getElementById('adminPasswordInput').value = '';
-    sessionStorage.setItem('robig_admin_session', 'true');
+    localStorage.setItem('robig_admin_session', 'true');
     localStorage.setItem('robig_unlocked', 'true');
     localStorage.setItem('robig_unlock_code', 'ADMIN');
     document.getElementById('accessGateOverlay').style.display = 'none';
@@ -1567,11 +1567,11 @@ async function tryAdminLogin() {
 }
 
 function isAdminSession() {
-  return sessionStorage.getItem('robig_admin_session') === 'true';
+  return localStorage.getItem('robig_admin_session') === 'true';
 }
 
 function adminLogout() {
-  sessionStorage.removeItem('robig_admin_session');
+  localStorage.removeItem('robig_admin_session');
   document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
   document.getElementById('adminPanelModalBg').classList.remove('show');
   showToast('🚪 Admin logout হয়েছে');
@@ -4036,6 +4036,11 @@ function togglePause() {
 
 // ===== MODAL =====
 function openModal() {
+  // Sync modal provider with sidebar provider
+  const sidebarProvider = document.getElementById('aiProvider').value;
+  const provMap = { gemini:'gemini', openai:'openai', openrouter:'openrouter', grok:'grok' };
+  const modalProv = document.getElementById('modalProvider');
+  if (provMap[sidebarProvider]) modalProv.value = sidebarProvider;
   document.getElementById('modalBg').classList.add('show');
   updateModalKey();
 }
@@ -4049,7 +4054,12 @@ function updateModalKey() {
 function saveApiKey() {
   const p = document.getElementById('modalProvider').value;
   const v = document.getElementById('apiKeyInput').value.trim();
-  if (v) { apiKeys[p] = v; localStorage.setItem('robig_keys', JSON.stringify(apiKeys)); }
+  if (v) {
+    apiKeys[p] = v;
+  } else {
+    delete apiKeys[p];
+  }
+  localStorage.setItem('robig_keys', JSON.stringify(apiKeys));
   document.getElementById('keyStatus').textContent = v ? '✅ Key saved' : '⚠ No key saved';
 }
 async function testKey() {
