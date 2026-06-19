@@ -1347,6 +1347,10 @@ async function hashPassword(pwd) {
 // Store the correct hash once on first load
 const _CORRECT_HASH = (async () => hashPassword('5877162026'))();
 
+// ── Hardcoded Gist ID (embedded by admin for cross-device use) ───
+// Admin: Gist setup করার পর এই ID টা এখানে লিখুন (একবারই করতে হবে)
+const HARDCODED_GIST_ID = '4d5dbd5f3322e6c4194681d46665c625'; // ← আপনার Gist ID
+
 // ── Gist config (saved in localStorage) ──────────────────────────
 function getGistConfig() {
   try { return JSON.parse(localStorage.getItem('robig_gist_config') || 'null'); }
@@ -1423,10 +1427,30 @@ const CACHE_TTL_MS = 10 * 60 * 1000;
 
 async function fetchAndCacheCodes() {
   const cfg = getGistConfig();
-  if (!cfg?.gistId || !cfg?.token) return getCachedCodes() || [];
-  const codes = await readGistCodes(cfg);
-  if (codes !== null) setCachedCodes(codes);
-  return codes !== null ? codes : (getCachedCodes() || []);
+  // Admin device: use token for authenticated fetch
+  if (cfg?.gistId && cfg?.token) {
+    const codes = await readGistCodes(cfg);
+    if (codes !== null) { setCachedCodes(codes); return codes; }
+  }
+  // Other devices: try public fetch using stored gistId (no token needed)
+  const storedGistId = cfg?.gistId || localStorage.getItem('robig_public_gist_id') || HARDCODED_GIST_ID;
+  if (storedGistId) {
+    try {
+      const res = await fetch(`https://api.github.com/gists/${storedGistId}`, {
+        headers: { 'Accept': 'application/vnd.github+json' }
+      });
+      if (res.ok) {
+        const gist = await res.json();
+        const raw = gist.files?.['robi-graphics-codes.json']?.content;
+        if (raw) {
+          const codes = JSON.parse(raw);
+          setCachedCodes(codes);
+          return codes;
+        }
+      }
+    } catch(e) {}
+  }
+  return getCachedCodes() || [];
 }
 
 // ── Validation ────────────────────────────────────────────────────
@@ -1624,6 +1648,8 @@ async function saveGistConfig() {
     }
 
     saveGistConfig_local(cfg);
+    // Store public gistId so other devices can fetch without token
+    localStorage.setItem('robig_public_gist_id', cfg.gistId);
     // Sync codes from Gist into cache
     const codes = await readGistCodes(cfg);
     if (codes) setCachedCodes(codes);
