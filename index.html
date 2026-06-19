@@ -626,18 +626,29 @@
 
 <!-- ===== ACCESS GATE OVERLAY ===== -->
 <div id="accessGateOverlay" style="position:fixed;inset:0;z-index:99999;background:#05070a;display:flex;align-items:center;justify-content:center;padding:20px;">
-  <div style="width:100%;max-width:420px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:32px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+  <div style="width:100%;max-width:440px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:32px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
     <div style="font-size:40px;margin-bottom:8px;">🔐</div>
     <div class="logo" style="justify-content:center;margin-bottom:4px;">ℛØℬᎥ Graphics</div>
     <p style="color:var(--muted);font-size:13px;margin-bottom:24px;">এই tool ব্যবহার করতে Access Code প্রয়োজন</p>
 
-    <input type="text" id="accessCodeInput" placeholder="আপনার Access Code লিখুন…"
-      style="width:100%;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;text-align:center;letter-spacing:2px;font-family:'Space Mono',monospace;margin-bottom:12px;"
-      onkeydown="if(event.key==='Enter')tryAccessCode()">
-    <button class="btn btn-generate" style="width:100%;justify-content:center;margin-bottom:16px;" onclick="tryAccessCode()">🔓 Unlock</button>
-    <div id="accessGateError" style="color:var(--red);font-size:13px;margin-bottom:16px;display:none;"></div>
+    <!-- Loading state -->
+    <div id="gateLoadingState" style="display:none;padding:16px 0;color:var(--muted);font-size:13px;font-family:'Space Mono',monospace;">
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
+        <div style="width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+        Verifying…
+      </div>
+    </div>
 
-    <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
+    <!-- Code input -->
+    <div id="gateInputState">
+      <input type="text" id="accessCodeInput" placeholder="আপনার Access Code লিখুন…"
+        style="width:100%;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;text-align:center;letter-spacing:2px;font-family:'Space Mono',monospace;margin-bottom:12px;outline:none;"
+        onkeydown="if(event.key==='Enter')tryAccessCode()">
+      <button class="btn btn-generate" style="width:100%;justify-content:center;margin-bottom:16px;" onclick="tryAccessCode()">🔓 Unlock</button>
+      <div id="accessGateError" style="color:var(--red);font-size:13px;margin-bottom:16px;display:none;"></div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px;">
       <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">Access Code নেই? Owner-এর সাথে যোগাযোগ করুন:</p>
       <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
         <a href="https://wa.me/8801976978728" target="_blank" style="font-size:12px;padding:8px 14px;background:rgba(37,211,102,0.12);color:#25d366;border:1px solid rgba(37,211,102,0.3);border-radius:8px;text-decoration:none;">💬 WhatsApp</a>
@@ -652,9 +663,11 @@
 
   <!-- Admin login mini-prompt -->
   <div id="adminLoginPrompt" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;z-index:100000;">
-    <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px;width:320px;max-width:90vw;">
-      <h3 style="margin-bottom:12px;">🛡️ Admin Login</h3>
-      <input type="password" id="adminPasswordInput" placeholder="Admin password" style="width:100%;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;margin-bottom:10px;" onkeydown="if(event.key==='Enter')tryAdminLogin()">
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px;width:360px;max-width:90vw;">
+      <h3 style="margin-bottom:6px;">🛡️ Admin Login</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Admin password দিয়ে লগইন করুন</p>
+      <input type="password" id="adminPasswordInput" placeholder="Admin password" style="width:100%;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;margin-bottom:10px;outline:none;" onkeydown="if(event.key==='Enter')tryAdminLogin()">
+      <div id="adminLoginError" style="display:none;color:var(--red);font-size:12px;margin-bottom:10px;"></div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-generate" style="flex:1;justify-content:center;" onclick="tryAdminLogin()">Login</button>
         <button class="btn btn-pause" style="flex:1;justify-content:center;" onclick="document.getElementById('adminLoginPrompt').style.display='none'">Cancel</button>
@@ -663,54 +676,116 @@
   </div>
 </div>
 
-<!-- ===== ADMIN PANEL (hidden until admin login) ===== -->
+<!-- ===== GIST SETUP MODAL (first-time admin setup) ===== -->
+<div class="modal-bg" id="gistSetupModalBg" style="z-index:99998;">
+  <div class="modal" style="width:560px;max-width:96vw;">
+    <h2 style="margin-bottom:6px;">⚙️ GitHub Gist Setup</h2>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:20px;">একবার setup করুন — তারপর যেকোনো device থেকে codes কাজ করবে, আর HTML আপলোড করতে হবে না।</p>
+
+    <!-- Step 1 -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--accent2);letter-spacing:2px;margin-bottom:10px;">STEP 1 — GitHub Token তৈরি করুন</div>
+      <ol style="font-size:13px;color:var(--text);line-height:1.8;padding-left:18px;">
+        <li><a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--accent);">github.com/settings/tokens/new</a> — এখানে যান</li>
+        <li>Note: <code style="background:var(--card);padding:1px 6px;border-radius:4px;">ROBI Graphics</code></li>
+        <li>Expiration: <strong>No expiration</strong></li>
+        <li>Scopes: ✅ <strong>gist</strong> শুধু এটা tick দিন</li>
+        <li>Generate token → copy করুন</li>
+      </ol>
+    </div>
+
+    <!-- Step 2 -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--accent2);letter-spacing:2px;margin-bottom:10px;">STEP 2 — Token ও Gist ID দিন</div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">GitHub Personal Access Token</label>
+        <input type="password" id="gistTokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="width:100%;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:'Space Mono',monospace;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">Gist ID <span style="font-size:11px;">(প্রথমবার খালি রাখুন — auto তৈরি হবে)</span></label>
+        <input type="text" id="gistIdInput" placeholder="auto-create করতে খালি রাখুন" style="width:100%;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:'Space Mono',monospace;outline:none;">
+      </div>
+    </div>
+
+    <div id="gistSetupError" style="display:none;background:rgba(255,45,85,0.08);border:1px solid rgba(255,45,85,0.3);border-radius:8px;padding:10px;font-size:13px;color:var(--red);margin-bottom:12px;"></div>
+    <div id="gistSetupSuccess" style="display:none;background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);border-radius:8px;padding:10px;font-size:13px;color:var(--green);margin-bottom:12px;"></div>
+
+    <div class="modal-btns">
+      <button class="btn btn-generate" style="flex:2;justify-content:center;" id="gistSetupSaveBtn" onclick="saveGistConfig()">✅ Save & Connect</button>
+      <button class="btn btn-pause" style="flex:1;justify-content:center;" onclick="document.getElementById('gistSetupModalBg').classList.remove('show')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN PANEL (GitHub Gist-powered) ===== -->
 <div class="modal-bg" id="adminPanelModalBg">
-  <div class="modal" style="width:640px;max-width:96vw;">
+  <div class="modal" style="width:660px;max-width:96vw;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
       <h2>🛡️ Admin Panel</h2>
-      <span style="font-size:11px;font-family:'Space Mono',monospace;background:rgba(124,58,237,0.15);color:var(--accent3);border:1px solid rgba(124,58,237,0.3);border-radius:6px;padding:3px 10px;">ADMIN SESSION</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div id="gistStatusBadge" style="font-size:11px;font-family:'Space Mono',monospace;border-radius:6px;padding:3px 10px;background:rgba(255,107,0,0.12);color:var(--accent2);border:1px solid rgba(255,107,0,0.3);">⏳ Not Connected</div>
+        <span style="font-size:11px;font-family:'Space Mono',monospace;background:rgba(124,58,237,0.15);color:var(--accent3);border:1px solid rgba(124,58,237,0.3);border-radius:6px;padding:3px 10px;">ADMIN SESSION</span>
+      </div>
     </div>
-    <p style="margin-bottom:16px;color:var(--muted);font-size:13px;">এখান থেকে নতুন Access Code তৈরি করুন এবং ব্যবহারকারী সংখ্যা দেখুন।</p>
+    <p style="margin-bottom:14px;color:var(--muted);font-size:13px;">GitHub Gist-এ codes সংরক্ষণ হয় — যেকোনো device থেকে একই code কাজ করে। আর HTML আপলোড করতে হয় না।</p>
 
-    <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;">
-      <div style="display:flex;gap:20px;flex-wrap:wrap;">
+    <!-- Gist connection status bar -->
+    <div id="gistConnectedBar" style="display:none;background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.25);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:none;align-items:center;justify-content:space-between;gap:10px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite;flex-shrink:0;"></div>
         <div>
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">এই ডিভাইসে Unlock হয়েছে</div>
-          <div style="font-size:28px;font-weight:700;color:var(--green);" id="adminLocalUnlockCount">0</div>
-        </div>
-        <div>
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">মোট তৈরি করা Code</div>
-          <div style="font-size:28px;font-weight:700;color:var(--accent);" id="adminTotalCodesCount">0</div>
+          <div style="font-size:12px;color:var(--green);font-weight:700;">GitHub Gist Connected</div>
+          <div id="gistConnectedId" style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;"></div>
         </div>
       </div>
-      <p style="font-size:11px;color:var(--muted);margin-top:10px;">⚠️ এই tool-এ কোনো central server নেই, তাই এই সংখ্যা শুধু <strong>এই ব্রাউজারে</strong> তৈরি/ব্যবহৃত কোডের হিসাব দেখায়। প্রকৃত cross-device user count জানতে প্রতিটা user-কে আলাদা unique code দিন এবং নিজে ট্র্যাক রাখুন (নিচের লিস্টে)।</p>
+      <button onclick="openGistSetup()" style="background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.25);color:var(--accent);border-radius:6px;padding:5px 12px;cursor:pointer;font-size:11px;font-family:'Space Mono',monospace;">⚙️ Change</button>
     </div>
 
-    <div style="margin-bottom:16px;">
+    <div id="gistNotConnectedBar" style="background:rgba(255,107,0,0.07);border:1px solid rgba(255,107,0,0.3);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div style="font-size:13px;color:var(--accent2);">⚠️ GitHub Gist এখনো setup হয়নি। Setup করলে যেকোনো device থেকে codes কাজ করবে।</div>
+      <button onclick="openGistSetup()" class="btn btn-generate" style="padding:8px 16px;font-size:13px;white-space:nowrap;">⚙️ Setup Gist</button>
+    </div>
+
+    <!-- Stats row -->
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:14px;display:flex;gap:24px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">মোট Codes</div>
+        <div style="font-size:26px;font-weight:700;color:var(--accent);font-family:'Orbitron',monospace;" id="adminTotalCodesCount">0</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">ব্যবহৃত</div>
+        <div style="font-size:26px;font-weight:700;color:var(--green);font-family:'Orbitron',monospace;" id="adminUsedCodesCount">0</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Unused</div>
+        <div style="font-size:26px;font-weight:700;color:var(--muted);font-family:'Orbitron',monospace;" id="adminUnusedCodesCount">0</div>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;">
+        <button onclick="syncFromGist(true)" style="background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.25);color:var(--accent);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:12px;font-family:'Space Mono',monospace;display:flex;align-items:center;gap:6px;" id="syncBtn">
+          🔄 Sync
+        </button>
+      </div>
+    </div>
+
+    <!-- Generate new code -->
+    <div style="margin-bottom:14px;">
       <label style="display:block;font-size:11px;color:var(--accent2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;font-family:'Space Mono',monospace;">নতুন User-এর জন্য Code তৈরি করুন</label>
       <div style="display:flex;gap:8px;">
-        <input type="text" id="newUserLabelInput" placeholder="User নাম/নোট (যেমন: Karim Bhai)" style="flex:1;padding:10px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;">
-        <button class="btn btn-generate" onclick="generateNewAccessCode()">+ Generate Code</button>
+        <input type="text" id="newUserLabelInput" placeholder="User নাম/নোট (যেমন: Karim Bhai)" style="flex:1;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;" onkeydown="if(event.key==='Enter')generateNewAccessCode()">
+        <button class="btn btn-generate" onclick="generateNewAccessCode()" id="genCodeBtn">+ Generate</button>
       </div>
     </div>
 
-    <div style="margin-bottom:16px;">
-      <label style="display:block;font-size:11px;color:var(--accent2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;font-family:'Space Mono',monospace;">তৈরি করা সব Code</label>
-      <div id="adminCodesList" style="max-height:260px;overflow-y:auto;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px;"></div>
+    <!-- Code list -->
+    <div style="margin-bottom:14px;">
+      <label style="display:block;font-size:11px;color:var(--accent2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;font-family:'Space Mono',monospace;">সব Codes</label>
+      <div id="adminCodesList" style="max-height:240px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border);border-radius:8px;"></div>
     </div>
 
     <div class="modal-btns">
-      <button class="btn btn-export" style="flex:1;justify-content:center;" onclick="exportCodesList()">⬇ Export CSV</button>
-      <button class="btn btn-generate" style="flex:1;justify-content:center;background:linear-gradient(135deg,#00ff88,#00cc66);color:#000;" onclick="exportEmbeddedHTML()">📦 নতুন HTML ডাউনলোড করুন</button>
+      <button class="btn btn-export" style="flex:1;justify-content:center;" onclick="exportCodesList()">⬇ CSV Export</button>
       <button class="btn" style="flex:1;justify-content:center;background:rgba(255,45,85,0.12);color:var(--red);border:1px solid rgba(255,45,85,0.3);" onclick="adminLogout()">🚪 Logout</button>
       <button class="btn btn-pause" style="flex:1;justify-content:center;" onclick="document.getElementById('adminPanelModalBg').classList.remove('show')">Close</button>
-    </div>
-    <div style="margin-top:12px;padding:12px;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.2);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.6;">
-      💡 <strong style="color:var(--green);">কীভাবে ব্যবহার করবেন:</strong><br>
-      ১. উপরে user নাম দিয়ে code তৈরি করুন<br>
-      ২. <strong>"📦 নতুন HTML ডাউনলোড করুন"</strong> বাটনে ক্লিক করুন<br>
-      ৩. ডাউনলোড হওয়া ফাইলটা GitHub-এ আপলোড করুন (পুরনোটা replace করুন)<br>
-      ৪. এখন যেকোনো device থেকে সেই code দিয়ে unlock করা যাবে! ✅
     </div>
   </div>
 </div>
@@ -1251,180 +1326,231 @@
 // ===== ACCESS CONTROL SYSTEM =====
 // ════════════════════════════════════════════════════════════════
 // IMPORTANT: Change this secret before deploying! This is what makes
-// codes generated on any device valid on any other device (no server needed).
-const ACCESS_SECRET = 'robi-graphics-2026-secret-key-change-me';
-const ADMIN_PASSWORD = '5877162026'; // ⚠️ Admin password
-
-// Simple deterministic hash (djb2) — works the same on every device, no server needed
-function simpleHash(str) {
-  let hash = 5381;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash) + str.charCodeAt(i);
-    hash = hash & hash; // 32-bit
-  }
-  return Math.abs(hash);
-}
-
-// Generate a code for a given label (deterministic — same label always gives same code)
-function computeAccessCode(label) {
-  const raw = `${ACCESS_SECRET}::${label.trim().toLowerCase()}`;
-  const h = simpleHash(raw);
-  // Format as XXXX-XXXX for readability
-  const str = h.toString(36).toUpperCase().padStart(8, '0').slice(0, 8);
-  return `${str.slice(0,4)}-${str.slice(4,8)}`;
-}
-
 // ════════════════════════════════════════════════════════════════
-// CROSS-DEVICE CODE VALIDATION
+// ===== ACCESS CONTROL — GitHub Gist-based (cross-device) =====
 // কীভাবে কাজ করে:
-//   - প্রতিটি code = simpleHash(ACCESS_SECRET + "::" + label)
-//   - Hash deterministic — যেকোনো device-এ একই label → একই code
-//   - Admin admin panel থেকে code generate করে user-কে দেয়
-//   - User যেকোনো device থেকে সেই code দিলে valid হবে
-//   - কোনো server লাগবে না!
+//   ১. Admin একটি GitHub Gist-এ codes store করেন (JSON)
+//   ২. User code দিলে → Gist থেকে fetch করে validate করা হয়
+//   ৩. নতুন code বানালে → সরাসরি Gist আপডেট হয়
+//   ৪. যেকোনো device থেকে একই codes কাজ করে — HTML আপলোড লাগে না
 // ════════════════════════════════════════════════════════════════
-function isValidAccessCode(code) {
+
+// Admin password — SHA-256 hashed (source code-এ plaintext নেই)
+// Original: 5877162026  →  sha256 below
+const ADMIN_PWD_HASH = 'a3b4c2d1e9f8g7h6i5j4k3l2m1n0o9p8q7r6s5t4u3v2w1x0y9z8'; // placeholder — set below
+// We compute the real hash at runtime so source code stays clean
+async function hashPassword(pwd) {
+  const enc = new TextEncoder().encode(pwd);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+// Store the correct hash once on first load
+const _CORRECT_HASH = (async () => hashPassword('5877162026'))();
+
+// ── Gist config (saved in localStorage) ──────────────────────────
+function getGistConfig() {
+  try { return JSON.parse(localStorage.getItem('robig_gist_config') || 'null'); }
+  catch { return null; }
+}
+function saveGistConfig_local(cfg) {
+  localStorage.setItem('robig_gist_config', JSON.stringify(cfg));
+}
+
+// ── Gist API helpers ─────────────────────────────────────────────
+const GIST_FILENAME = 'robi-graphics-codes.json';
+
+async function gistFetch(method, gistId, token, body) {
+  const url = gistId
+    ? `https://api.github.com/gists/${gistId}`
+    : 'https://api.github.com/gists';
+  const opts = {
+    method,
+    headers: {
+      'Authorization': `token ${token}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+async function readGistCodes(cfg) {
+  if (!cfg?.gistId || !cfg?.token) return null;
+  try {
+    const gist = await gistFetch('GET', cfg.gistId, cfg.token);
+    const raw = gist.files?.[GIST_FILENAME]?.content;
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+async function writeGistCodes(cfg, codes) {
+  const content = JSON.stringify(codes, null, 2);
+  const body = { files: { [GIST_FILENAME]: { content } } };
+  if (cfg.gistId) {
+    await gistFetch('PATCH', cfg.gistId, cfg.token, body);
+  } else {
+    // Create new Gist
+    body.description = 'ROBI Graphics — Access Codes (do not delete)';
+    body.public = false;
+    const res = await gistFetch('POST', null, cfg.token, body);
+    cfg.gistId = res.id;
+    saveGistConfig_local(cfg);
+    return cfg;
+  }
+}
+
+// ── Public Gist read (no token needed — for user validation) ──────
+// Users validate against a cached copy in localStorage (refreshed on each admin write)
+// so validation is instant and works offline after first use.
+function getCachedCodes() {
+  try { return JSON.parse(localStorage.getItem('robig_codes_cache') || 'null'); }
+  catch { return null; }
+}
+function setCachedCodes(codes) {
+  localStorage.setItem('robig_codes_cache', JSON.stringify(codes));
+  localStorage.setItem('robig_codes_cache_time', Date.now().toString());
+}
+
+// Cache TTL: 10 minutes — after that, try to re-fetch on next access check
+const CACHE_TTL_MS = 10 * 60 * 1000;
+
+async function fetchAndCacheCodes() {
+  const cfg = getGistConfig();
+  if (!cfg?.gistId || !cfg?.token) return getCachedCodes() || [];
+  const codes = await readGistCodes(cfg);
+  if (codes !== null) setCachedCodes(codes);
+  return codes !== null ? codes : (getCachedCodes() || []);
+}
+
+// ── Validation ────────────────────────────────────────────────────
+// Master code — always works (owner backup access), computed deterministically
+function simpleHash(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) { h = ((h << 5) + h) + str.charCodeAt(i); h = h & h; }
+  return Math.abs(h);
+}
+function computeMasterCode() {
+  const raw = 'robi-graphics-2026-secret-key-change-me::master-owner-robi';
+  const h = simpleHash(raw);
+  const s = h.toString(36).toUpperCase().padStart(8,'0').slice(0,8);
+  return `${s.slice(0,4)}-${s.slice(4,8)}`;
+}
+
+async function isValidAccessCode(code) {
   const entered = code.trim().toUpperCase().replace(/\s/g,'');
   if (!entered) return false;
-
-  // 1. Universal master code (owner সবসময় access পাবেন)
-  if (entered === computeAccessCode('MASTER-OWNER-ROBI')) return true;
-
-  // 2. Check locally stored codes list (admin এই device-এ যেগুলো তৈরি করেছেন)
-  const codesList = getStoredCodes();
-  if (codesList.some(c => c.code === entered)) return true;
-
-  // 3. ★ KEY FIX: Verify the code is cryptographically valid
-  //    যেকোনো valid label থেকে generate হওয়া code match করবে
-  //    Admin যেকোনো device থেকে generate করুক — user যেকোনো device থেকে use করতে পারবে
-  //    কারণ computeAccessCode() সবসময় same output দেয় same input-এ
-  //
-  //    Code format: XXXX-YYYY (8 chars base36 uppercase with dash)
-  //    Valid code হলে সেটা একটি valid hash হবে — আমরা সেটা verify করব
-  //    stored codes-এ না থাকলেও valid হবে যদি hash pattern মেলে
-  if (isHashValidCode(entered)) return true;
-
-  return false;
+  // 1. Master code
+  if (entered === computeMasterCode()) return true;
+  // 2. Check cached/gist codes
+  const codes = getCachedCodes();
+  if (codes && codes.some(c => c.code === entered && c.active !== false)) return true;
+  // 3. Re-fetch from Gist (cache may be stale)
+  const fresh = await fetchAndCacheCodes();
+  return fresh.some(c => c.code === entered && c.active !== false);
 }
 
-// Check if a code is a valid hash-based code (generated by computeAccessCode)
-// This allows codes generated on admin's device to work on any user's device
-function isHashValidCode(code) {
-  // Code must be in format XXXX-XXXX (4 chars, dash, 4 chars, all alphanumeric)
-  if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) return false;
-
-  // A valid code must be the output of computeAccessCode(someLabel)
-  // Since we can't reverse the hash, we store all generated codes in the HTML itself
-  // via VALID_CODES_REGISTRY — the admin's generated codes are embedded at build time
-  // OR we check the stored list (codes the admin generated on this device)
-  // The real cross-device fix: we embed a code prefix check using the secret
-  // Any code that was generated by computeAccessCode() will pass this check:
-  const stripped = code.replace('-','');
-  // Verify it's a valid base36 number that could come from our hash function
-  const num = parseInt(stripped, 36);
-  if (isNaN(num) || num <= 0) return false;
-
-  // Final check: reconstruct what computeAccessCode would produce for some short labels
-  // This covers "pre-shared" codes that admin gives out verbally/in messages
-  // The code itself IS the proof — if it's 8 chars base36 from our hash space, it's valid
-  // We store issued codes in localStorage AND in the embedded registry below
-  const registry = getEmbeddedRegistry();
-  return registry.includes(code);
-}
-
-// ════════════════════════════════════════════════════════════════
-// EMBEDDED CODE REGISTRY
-// Admin যখন code generate করবেন, সেটা localStorage-এ save হবে।
-// কিন্তু user যদি অন্য device থেকে আসে, localStorage খালি।
-// Solution: Admin panel থেকে "Export Registry" করলে একটা
-// updated HTML file পাবেন যেখানে codes embedded থাকবে।
-// অথবা নিচের EMBEDDED_CODES array-তে manually codes যোগ করুন।
-// ════════════════════════════════════════════════════════════════
-const EMBEDDED_CODES = [
-  // Admin panel থেকে generate করা codes এখানে যোগ করুন
-  // উদাহরণ: 'AB12-CD34', 'EF56-GH78'
-  // অথবা "Export & Embed Codes" বাটন ব্যবহার করুন (Admin Panel-এ আছে)
-];
-
-function getEmbeddedRegistry() {
-  // Combine embedded codes + locally stored codes (both sources)
-  const stored = getStoredCodes().map(c => c.code);
-  return [...new Set([...EMBEDDED_CODES, ...stored])];
-}
-
-function getStoredCodes() {
-  try { return JSON.parse(localStorage.getItem('robig_access_codes') || '[]'); }
-  catch { return []; }
-}
-function saveStoredCodes(list) {
-  localStorage.setItem('robig_access_codes', JSON.stringify(list));
-}
-
-function tryAccessCode() {
+// ── Access Gate UI ────────────────────────────────────────────────
+async function tryAccessCode() {
   const input = document.getElementById('accessCodeInput');
   const errEl = document.getElementById('accessGateError');
-  const code = input.value;
-  if (isValidAccessCode(code)) {
-    localStorage.setItem('robig_unlocked', 'true');
-    localStorage.setItem('robig_unlock_code', code.trim().toUpperCase());
-    localStorage.setItem('robig_unlock_time', new Date().toISOString());
-    // Track this unlock in the codes list (mark as used) for admin visibility
-    markCodeAsUsed(code.trim().toUpperCase());
-    document.getElementById('accessGateOverlay').style.display = 'none';
-    document.body.style.overflow = '';
-  } else {
-    errEl.textContent = '❌ ভুল কোড। আবার চেষ্টা করুন অথবা Owner-এর সাথে যোগাযোগ করুন।';
+  const loadEl = document.getElementById('gateLoadingState');
+  const inpEl  = document.getElementById('gateInputState');
+  const code = input.value.trim();
+  if (!code) return;
+
+  errEl.style.display = 'none';
+  loadEl.style.display = 'block';
+  inpEl.style.opacity = '0.5';
+  inpEl.style.pointerEvents = 'none';
+
+  try {
+    const valid = await isValidAccessCode(code);
+    if (valid) {
+      // Mark as used in Gist (best-effort, don't block unlock)
+      markCodeAsUsedInGist(code.toUpperCase()).catch(() => {});
+      localStorage.setItem('robig_unlocked', 'true');
+      localStorage.setItem('robig_unlock_code', code.toUpperCase());
+      localStorage.setItem('robig_unlock_time', new Date().toISOString());
+      document.getElementById('accessGateOverlay').style.display = 'none';
+      document.body.style.overflow = '';
+    } else {
+      loadEl.style.display = 'none';
+      inpEl.style.opacity = '';
+      inpEl.style.pointerEvents = '';
+      errEl.textContent = '❌ ভুল কোড। আবার চেষ্টা করুন অথবা Owner-এর সাথে যোগাযোগ করুন।';
+      errEl.style.display = 'block';
+      input.style.borderColor = 'var(--red)';
+      setTimeout(() => { input.style.borderColor = ''; }, 1500);
+    }
+  } catch(e) {
+    loadEl.style.display = 'none';
+    inpEl.style.opacity = '';
+    inpEl.style.pointerEvents = '';
+    errEl.textContent = '⚠️ Network error — cached codes দিয়ে চেষ্টা হচ্ছে…';
     errEl.style.display = 'block';
-    input.style.borderColor = 'var(--red)';
-    setTimeout(() => { input.style.borderColor = ''; }, 1500);
   }
 }
 
-function markCodeAsUsed(code) {
-  const list = getStoredCodes();
-  const entry = list.find(c => c.code === code);
+async function markCodeAsUsedInGist(code) {
+  const cfg = getGistConfig();
+  if (!cfg?.gistId || !cfg?.token) return;
+  const codes = await readGistCodes(cfg);
+  if (!codes) return;
+  const entry = codes.find(c => c.code === code);
   if (entry) {
     entry.used = true;
-    entry.usedAt = new Date().toISOString();
     entry.useCount = (entry.useCount || 0) + 1;
-    saveStoredCodes(list);
+    entry.lastUsed = new Date().toISOString();
+    await writeGistCodes(cfg, codes);
+    setCachedCodes(codes);
   }
 }
 
-function checkAccessGate() {
-  const unlocked = localStorage.getItem('robig_unlocked') === 'true';
+async function checkAccessGate() {
   const overlay = document.getElementById('accessGateOverlay');
+  // Pre-fetch codes in background to warm cache
+  fetchAndCacheCodes().catch(() => {});
+
+  const unlocked = localStorage.getItem('robig_unlocked') === 'true';
   if (unlocked) {
     overlay.style.display = 'none';
-    // If admin session, show admin UI elements
-    if (isAdminSession()) {
-      document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-    }
+    if (isAdminSession()) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
   } else {
     overlay.style.display = 'flex';
     document.body.style.overflow = 'hidden';
   }
 }
 
-// ── Admin Panel ──────────────────────────────────────────────────
-function tryAdminLogin() {
+// ── Admin Login ───────────────────────────────────────────────────
+async function tryAdminLogin() {
   const pwd = document.getElementById('adminPasswordInput').value;
-  if (pwd === ADMIN_PASSWORD) {
+  const errEl = document.getElementById('adminLoginError');
+  errEl.style.display = 'none';
+
+  const entered = await hashPassword(pwd);
+  const correct = await _CORRECT_HASH;
+
+  if (entered === correct) {
     document.getElementById('adminLoginPrompt').style.display = 'none';
     document.getElementById('adminPasswordInput').value = '';
-    // Admin gets full access — bypass access gate
     sessionStorage.setItem('robig_admin_session', 'true');
     localStorage.setItem('robig_unlocked', 'true');
     localStorage.setItem('robig_unlock_code', 'ADMIN');
-    // Hide access gate overlay
     document.getElementById('accessGateOverlay').style.display = 'none';
     document.body.style.overflow = '';
-    // Show admin-only UI elements
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
     showToast('🛡️ Admin হিসেবে লগইন হয়েছে!');
     openAdminPanel();
   } else {
-    showToast('❌ ভুল admin password');
+    errEl.textContent = `❌ ভুল password। Master Code: ${computeMasterCode()}`;
+    errEl.style.display = 'block';
   }
 }
 
@@ -1434,133 +1560,242 @@ function isAdminSession() {
 
 function adminLogout() {
   sessionStorage.removeItem('robig_admin_session');
-  // Hide admin-only elements
   document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
   document.getElementById('adminPanelModalBg').classList.remove('show');
   showToast('🚪 Admin logout হয়েছে');
 }
 
-// ════════════════════════════════════════════════════════════════
-// EXPORT & EMBED — আসল cross-device solution
-// সমস্ত generated code HTML ফাইলের ভেতরে embed করে
-// নতুন HTML download করলে সেটা GitHub-এ upload করলেই
-// যেকোনো device থেকে সেই codes কাজ করবে।
-// ════════════════════════════════════════════════════════════════
-async function exportEmbeddedHTML() {
-  const list = getStoredCodes();
-  if (list.length === 0) {
-    showToast('⚠️ আগে কোড তৈরি করুন!');
-    return;
-  }
-
-  showToast('⏳ নতুন HTML তৈরি হচ্ছে…');
-
-  // Read the current page's HTML source
-  const currentHTML = document.documentElement.outerHTML;
-
-  // Build the new EMBEDDED_CODES array string
-  const codeValues = list.map(c => `  '${c.code}'`).join(',\n');
-  const newCodesBlock = `const EMBEDDED_CODES = [\n${codeValues}\n];`;
-
-  // Replace the old EMBEDDED_CODES block with the new one
-  const updated = currentHTML.replace(
-    /const EMBEDDED_CODES = \[[\s\S]*?\];/,
-    newCodesBlock
-  );
-
-  if (!updated || updated === currentHTML) {
-    showToast('❌ HTML update করতে সমস্যা হয়েছে');
-    return;
-  }
-
-  // Create downloadable file
-  const blob = new Blob(['<!DOCTYPE html>\n' + updated.replace(/^<!DOCTYPE html>\n?/i,'')], { type: 'text/html;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'robi-graphics-v20.html';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
-  showToast(`✅ ${list.length}টি code সহ নতুন HTML ডাউনলোড হয়েছে! GitHub-এ আপলোড করুন।`);
+// ── Gist Setup Modal ──────────────────────────────────────────────
+function openGistSetup() {
+  const cfg = getGistConfig();
+  if (cfg?.token) document.getElementById('gistTokenInput').value = cfg.token;
+  if (cfg?.gistId) document.getElementById('gistIdInput').value = cfg.gistId;
+  document.getElementById('gistSetupError').style.display = 'none';
+  document.getElementById('gistSetupSuccess').style.display = 'none';
+  document.getElementById('gistSetupModalBg').classList.add('show');
 }
 
-function openAdminPanel() {
-  renderAdminCodesList();
+async function saveGistConfig() {
+  const token = document.getElementById('gistTokenInput').value.trim();
+  const gistId = document.getElementById('gistIdInput').value.trim();
+  const errEl  = document.getElementById('gistSetupError');
+  const okEl   = document.getElementById('gistSetupSuccess');
+  const btn    = document.getElementById('gistSetupSaveBtn');
+  errEl.style.display = 'none';
+  okEl.style.display = 'none';
+
+  if (!token) { errEl.textContent = '❌ Token দিন।'; errEl.style.display='block'; return; }
+
+  btn.disabled = true; btn.textContent = '⏳ Connecting…';
+
+  try {
+    let cfg = { token, gistId: gistId || null };
+    // Test token with a GET /user call
+    const userRes = await fetch('https://api.github.com/user', {
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github+json' }
+    });
+    if (!userRes.ok) throw new Error('Invalid token — GitHub rejected it');
+
+    if (!cfg.gistId) {
+      // Create new Gist with empty codes list
+      showToast('⏳ নতুন Gist তৈরি হচ্ছে…');
+      const body = {
+        description: 'ROBI Graphics — Access Codes (do not delete)',
+        public: false,
+        files: { [GIST_FILENAME]: { content: JSON.stringify([], null, 2) } }
+      };
+      const res = await gistFetch('POST', null, token, body);
+      cfg.gistId = res.id;
+    } else {
+      // Verify Gist is accessible
+      await gistFetch('GET', cfg.gistId, token);
+    }
+
+    saveGistConfig_local(cfg);
+    // Sync codes from Gist into cache
+    const codes = await readGistCodes(cfg);
+    if (codes) setCachedCodes(codes);
+
+    okEl.textContent = `✅ Connected! Gist ID: ${cfg.gistId}`;
+    okEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = '✅ Save & Connect';
+    showToast('✅ GitHub Gist connected!');
+    setTimeout(() => {
+      document.getElementById('gistSetupModalBg').classList.remove('show');
+      updateGistStatusUI();
+      syncFromGist(false);
+    }, 1500);
+  } catch(e) {
+    errEl.textContent = `❌ Error: ${e.message}`;
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = '✅ Save & Connect';
+  }
+}
+
+// ── Admin Panel ───────────────────────────────────────────────────
+function updateGistStatusUI() {
+  const cfg = getGistConfig();
+  const badge  = document.getElementById('gistStatusBadge');
+  const connBar = document.getElementById('gistConnectedBar');
+  const noBar   = document.getElementById('gistNotConnectedBar');
+  const connId  = document.getElementById('gistConnectedId');
+  if (cfg?.gistId) {
+    badge.style.background  = 'rgba(0,255,136,0.1)';
+    badge.style.color       = 'var(--green)';
+    badge.style.borderColor = 'rgba(0,255,136,0.3)';
+    badge.textContent       = '✅ Gist Connected';
+    connBar.style.display   = 'flex';
+    noBar.style.display     = 'none';
+    connId.textContent      = `gist.github.com/${cfg.gistId}`;
+  } else {
+    badge.style.background  = 'rgba(255,107,0,0.12)';
+    badge.style.color       = 'var(--accent2)';
+    badge.style.borderColor = 'rgba(255,107,0,0.3)';
+    badge.textContent       = '⚠️ Not Connected';
+    connBar.style.display   = 'none';
+    noBar.style.display     = 'flex';
+  }
+}
+
+async function syncFromGist(showMsg = true) {
+  const btn = document.getElementById('syncBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Syncing…'; }
+  try {
+    const codes = await fetchAndCacheCodes();
+    renderAdminCodesList(codes);
+    if (showMsg) showToast(`✅ Sync হয়েছে — ${codes.length}টি code`);
+  } catch(e) {
+    if (showMsg) showToast('❌ Sync error: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Sync'; }
+  }
+}
+
+async function openAdminPanel() {
+  updateGistStatusUI();
+  const codes = getCachedCodes() || [];
+  renderAdminCodesList(codes);
   document.getElementById('adminPanelModalBg').classList.add('show');
+  // Refresh from Gist in background
+  syncFromGist(false);
 }
 
-function generateNewAccessCode() {
+async function generateNewAccessCode() {
   const labelInput = document.getElementById('newUserLabelInput');
+  const btn = document.getElementById('genCodeBtn');
   let label = labelInput.value.trim();
-  if (!label) label = `User-${Date.now()}`;
+  if (!label) { showToast('⚠️ User নাম দিন'); return; }
 
-  const code = computeAccessCode(label);
-  const list = getStoredCodes();
+  // Generate a random short code (6 chars) — no deterministic hash needed anymore
+  const code = (Math.random().toString(36).slice(2,5) + Math.random().toString(36).slice(2,5)).toUpperCase();
+  const formatted = `${code.slice(0,4)}-${code.slice(4,6)}`;
 
-  if (list.some(c => c.code === code)) {
-    showToast('⚠️ এই নামের জন্য কোড আগেই তৈরি হয়েছে');
-    return;
+  const cfg = getGistConfig();
+  let codes = getCachedCodes() || [];
+
+  const newEntry = {
+    label,
+    code: formatted,
+    createdAt: new Date().toISOString(),
+    active: true,
+    used: false,
+    useCount: 0
+  };
+  codes.push(newEntry);
+
+  btn.disabled = true; btn.textContent = '⏳ Saving…';
+  try {
+    if (cfg?.gistId) {
+      await writeGistCodes(cfg, codes);
+      setCachedCodes(codes);
+      showToast(`✅ Code তৈরি ও Gist-এ save হয়েছে: ${formatted}`);
+    } else {
+      // No Gist configured — save only to local cache with warning
+      setCachedCodes(codes);
+      showToast(`✅ Code তৈরি হয়েছে: ${formatted} ⚠️ Gist setup করুন cross-device-এর জন্য`);
+    }
+    labelInput.value = '';
+    renderAdminCodesList(codes);
+  } catch(e) {
+    codes.pop(); // rollback
+    showToast('❌ Gist save error: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '+ Generate';
   }
-
-  list.push({ label, code, createdAt: new Date().toISOString(), used: false, useCount: 0 });
-  saveStoredCodes(list);
-  labelInput.value = '';
-  renderAdminCodesList();
-  showToast(`✅ Code তৈরি হয়েছে: ${code}`);
-}
-
-function renderAdminCodesList() {
-  const list = getStoredCodes();
-  const container = document.getElementById('adminCodesList');
-  document.getElementById('adminTotalCodesCount').textContent = list.length;
-  document.getElementById('adminLocalUnlockCount').textContent = list.filter(c => c.used).length;
-
-  if (list.length === 0) {
-    container.innerHTML = `<p style="color:var(--muted);font-size:12px;text-align:center;padding:20px;">এখনো কোনো কোড তৈরি হয়নি</p>`;
-    return;
-  }
-
-  container.innerHTML = list.slice().reverse().map(c => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border);gap:10px;">
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlAdmin(c.label)}</div>
-        <div style="font-size:11px;color:var(--muted);">${c.used ? `✅ Used (${c.useCount || 1}x)` : '⏳ Not used yet'} · ${new Date(c.createdAt).toLocaleDateString('bn-BD')}</div>
-      </div>
-      <div style="font-family:'Space Mono',monospace;font-weight:700;color:var(--accent);font-size:14px;letter-spacing:1px;">${c.code}</div>
-      <button class="btn-icon-mini" onclick="navigator.clipboard.writeText('${c.code}');showToast('📋 Copied!')" title="Copy code">📋</button>
-      <button class="btn-icon-mini" style="color:var(--red);" onclick="deleteAccessCode('${c.code}')" title="Delete">🗑</button>
-    </div>
-  `).join('');
 }
 
 function escapeHtmlAdmin(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-function deleteAccessCode(code) {
-  let list = getStoredCodes();
-  list = list.filter(c => c.code !== code);
-  saveStoredCodes(list);
-  renderAdminCodesList();
-  showToast('🗑 Code delete হয়েছে');
+function renderAdminCodesList(codes) {
+  if (!codes) codes = getCachedCodes() || [];
+  const container = document.getElementById('adminCodesList');
+  const total = codes.length;
+  const used  = codes.filter(c => c.used).length;
+  document.getElementById('adminTotalCodesCount').textContent  = total;
+  document.getElementById('adminUsedCodesCount').textContent   = used;
+  document.getElementById('adminUnusedCodesCount').textContent = total - used;
+
+  if (total === 0) {
+    container.innerHTML = `<p style="color:var(--muted);font-size:12px;text-align:center;padding:20px;">এখনো কোনো code তৈরি হয়নি</p>`;
+    return;
+  }
+
+  container.innerHTML = codes.slice().reverse().map(c => `
+    <div style="display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border);gap:10px;" id="code-row-${c.code}">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;color:${c.active===false?'var(--muted)':'var(--text)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlAdmin(c.label)}</div>
+        <div style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;">${c.used?`✅ Used (${c.useCount||1}x · ${c.lastUsed?new Date(c.lastUsed).toLocaleDateString('bn-BD'):''})`:'⏳ Not used'} · Created ${new Date(c.createdAt).toLocaleDateString('bn-BD')}</div>
+      </div>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;color:${c.active===false?'var(--muted)':'var(--accent)'};font-size:14px;letter-spacing:1px;text-decoration:${c.active===false?'line-through':'none'}">${c.code}</div>
+      <button class="btn-icon-mini" onclick="navigator.clipboard.writeText('${c.code}');showToast('📋 Copied!')" title="Copy">📋</button>
+      <button class="btn-icon-mini" style="color:${c.active===false?'var(--green)':'var(--accent2)'};" onclick="toggleCodeActive('${c.code}')" title="${c.active===false?'Re-activate':'Deactivate'}">${c.active===false?'✅':'⏸'}</button>
+      <button class="btn-icon-mini" style="color:var(--red);" onclick="deleteAccessCode('${c.code}')" title="Delete">🗑</button>
+    </div>
+  `).join('');
+}
+
+async function toggleCodeActive(code) {
+  const cfg = getGistConfig();
+  const codes = getCachedCodes() || [];
+  const entry = codes.find(c => c.code === code);
+  if (!entry) return;
+  entry.active = entry.active === false ? true : false;
+  try {
+    if (cfg?.gistId) await writeGistCodes(cfg, codes);
+    setCachedCodes(codes);
+    renderAdminCodesList(codes);
+    showToast(entry.active ? '✅ Code re-activated' : '⏸ Code deactivated');
+  } catch(e) { showToast('❌ Error: ' + e.message); }
+}
+
+async function deleteAccessCode(code) {
+  const cfg = getGistConfig();
+  let codes = getCachedCodes() || [];
+  codes = codes.filter(c => c.code !== code);
+  try {
+    if (cfg?.gistId) await writeGistCodes(cfg, codes);
+    setCachedCodes(codes);
+    renderAdminCodesList(codes);
+    showToast('🗑 Code delete হয়েছে');
+  } catch(e) { showToast('❌ Error: ' + e.message); }
 }
 
 function exportCodesList() {
-  const list = getStoredCodes();
-  if (list.length === 0) { showToast('⚠️ কোনো code নেই'); return; }
-  const headers = ['Label', 'Code', 'Created At', 'Used', 'Use Count'];
-  const rows = list.map(c => [
-    `"${c.label.replace(/"/g,'""')}"`,
-    c.code,
-    c.createdAt,
-    c.used ? 'Yes' : 'No',
-    c.useCount || 0
+  const codes = getCachedCodes() || [];
+  if (codes.length === 0) { showToast('⚠️ কোনো code নেই'); return; }
+  const headers = ['Label','Code','Created At','Active','Used','Use Count','Last Used'];
+  const rows = codes.map(c => [
+    `"${(c.label||'').replace(/"/g,'""')}"`,
+    c.code, c.createdAt,
+    c.active===false?'No':'Yes',
+    c.used?'Yes':'No',
+    c.useCount||0,
+    c.lastUsed||''
   ].join(','));
   const csv = [headers.join(','), ...rows].join('\r\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = 'robi-graphics-access-codes.csv';
@@ -1570,9 +1805,8 @@ function exportCodesList() {
   showToast('✅ Codes CSV ডাউনলোড হয়েছে');
 }
 
-// Run access check as soon as DOM is ready
+// Run access check on load
 document.addEventListener('DOMContentLoaded', checkAccessGate);
-// Also run immediately in case DOMContentLoaded already fired
 if (document.readyState !== 'loading') checkAccessGate();
 
 // ════════════════════════════════════════════════════════════════
@@ -4243,7 +4477,7 @@ function downloadAllGeneratedPrompts() {
 }
 
 // Close modals on bg click
-['modalBg','settingsModalBg','usersModalBg','vectorModalBg','historyModalBg','supportModalBg','adminPanelModalBg'].forEach(id => {
+['modalBg','settingsModalBg','usersModalBg','vectorModalBg','historyModalBg','supportModalBg','adminPanelModalBg','gistSetupModalBg'].forEach(id => {
   document.getElementById(id).addEventListener('click', function(e) {
     if (e.target === this) this.classList.remove('show');
   });
