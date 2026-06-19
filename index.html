@@ -1513,8 +1513,20 @@ async function markCodeAsUsedInGist(code) {
   }
 }
 
+const APP_VERSION = 'v20-gist-1'; // ← এই version বদলালে সবার পুরনো session reset হবে
+
 async function checkAccessGate() {
   const overlay = document.getElementById('accessGateOverlay');
+
+  // Version check — নতুন version deploy হলে পুরনো unlock session clear করো
+  const savedVersion = localStorage.getItem('robig_app_version');
+  if (savedVersion !== APP_VERSION) {
+    localStorage.removeItem('robig_unlocked');
+    localStorage.removeItem('robig_unlock_code');
+    localStorage.removeItem('robig_unlock_time');
+    localStorage.setItem('robig_app_version', APP_VERSION);
+  }
+
   // Pre-fetch codes in background to warm cache
   fetchAndCacheCodes().catch(() => {});
 
